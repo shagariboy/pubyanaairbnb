@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lekki Stays — Luxury Short-let, Lagos</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F7F4EE;
+    --sand: #E8E0D0;
+    --stone: #C4B89A;
+    --clay: #8B6F47;
+    --bark: #3D2E1A;
+    --white: #FDFCFA;
+    --text: #2A1F10;
+    --muted: #7A6A54;
+    --accent: #B5804D;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--cream);
+    border-bottom: 1px solid var(--sand);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px; height: 64px;
+  }
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 400; letter-spacing: .04em;
+    color: var(--bark); text-decoration: none;
+  }
+  .nav-links { display: flex; gap: 32px; list-style: none; }
+  .nav-links a {
+    font-size: 13px; font-weight: 500; letter-spacing: .05em;
+    text-transform: uppercase; color: var(--muted);
+    text-decoration: none; transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--bark); }
+  .nav-cta {
+    background: var(--bark); color: var(--cream);
+    padding: 10px 22px; border-radius: 2px;
+    font-size: 13px; font-weight: 500; letter-spacing: .04em;
+    text-decoration: none; text-transform: uppercase;
+    transition: background .2s;
+  }
+  .nav-cta:hover { background: var(--clay); }
+
+  /* HERO */
+  .hero {
+    display: grid; grid-template-columns: 1fr 1fr;
+    min-height: calc(100vh - 64px);
+  }
+  .hero-left {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 80px 64px 80px 80px;
+  }
+  .hero-eyebrow {
+    font-size: 11px; font-weight: 500; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 20px;
+  }
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(48px, 5vw, 72px);
+    font-weight: 300; line-height: 1.05;
+    color: var(--bark); margin-bottom: 28px;
+  }
+  .hero-title em { font-style: italic; color: var(--clay); }
+  .hero-body {
+    font-size: 16px; color: var(--muted);
+    max-width: 400px; margin-bottom: 40px; line-height: 1.75;
+  }
+  .hero-actions { display: flex; gap: 16px; align-items: center; }
+  .btn-primary {
+    background: var(--bark); color: var(--cream);
+    padding: 14px 32px; border-radius: 2px;
+    font-size: 13px; font-weight: 500; letter-spacing: .05em;
+    text-transform: uppercase; text-decoration: none;
+    transition: background .2s;
+  }
+  .btn-primary:hover { background: var(--clay); }
+  .btn-ghost {
+    color: var(--muted); font-size: 13px; font-weight: 500;
+    letter-spacing: .04em; text-transform: uppercase;
+    text-decoration: none; display: flex; align-items: center; gap: 6px;
+    transition: color .2s;
+  }
+  .btn-ghost:hover { color: var(--bark); }
+  .hero-right {
+    position: relative; overflow: hidden;
+    background: var(--sand);
+  }
+  .hero-img {
+    width: 100%; height: 100%; object-fit: cover;
+    display: block;
+  }
+  .hero-img-placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, #D4C4A8 0%, #C0AE8C 40%, #A89470 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px;
+  }
+  .img-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 300; color: var(--bark);
+    opacity: .5; text-align: center; padding: 0 24px;
+  }
+  .hero-badge {
+    position: absolute; bottom: 32px; left: 32px;
+    background: var(--white); padding: 16px 20px;
+    border-radius: 4px; border: 1px solid var(--sand);
+  }
+  .badge-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px; font-weight: 400; color: var(--bark);
+    line-height: 1;
+  }
+  .badge-label { font-size: 11px; color: var(--muted); letter-spacing: .04em; }
+
+  /* SECTION BASE */
+  section { padding: 96px 80px; }
+  .section-label {
+    font-size: 11px; font-weight: 500; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(32px, 4vw, 48px); font-weight: 300;
+    color: var(--bark); line-height: 1.1; margin-bottom: 20px;
+  }
+  .section-title em { font-style: italic; color: var(--clay); }
+
+  /* PROPERTIES */
+  .properties { background: var(--white); }
+  .props-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 48px; }
+  .props-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .prop-card {
+    border: 1px solid var(--sand); border-radius: 4px;
+    overflow: hidden; background: var(--cream);
+    transition: transform .2s, box-shadow .2s;
+    cursor: pointer;
+  }
+  .prop-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(61,46,26,.08); }
+  .prop-img {
+    height: 220px;
+    background: linear-gradient(160deg, #CDBFA0 0%, #B5A07C 100%);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .prop-img-2 { background: linear-gradient(160deg, #C4B490 0%, #A08C64 100%); }
+  .prop-img-3 { background: linear-gradient(160deg, #D4C8B0 0%, #BCA882 100%); }
+  .prop-img-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; color: var(--bark); opacity: .4;
+  }
+  .prop-tag {
+    position: absolute; top: 12px; left: 12px;
+    background: var(--bark); color: var(--cream);
+    font-size: 10px; font-weight: 500; letter-spacing: .06em;
+    text-transform: uppercase; padding: 5px 10px; border-radius: 2px;
+  }
+  .prop-body { padding: 20px; }
+  .prop-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 400; color: var(--bark); margin-bottom: 4px;
+  }
+  .prop-loc { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .prop-features {
+    display: flex; gap: 16px; font-size: 12px; color: var(--muted);
+    margin-bottom: 16px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--sand);
+  }
+  .prop-feature { display: flex; align-items: center; gap: 5px; }
+  .prop-price-row { display: flex; justify-content: space-between; align-items: center; }
+  .prop-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px; font-weight: 400; color: var(--bark);
+  }
+  .prop-price span { font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--muted); }
+  .prop-btn {
+    background: transparent; border: 1px solid var(--bark);
+    color: var(--bark); padding: 8px 18px; border-radius: 2px;
+    font-size: 12px; font-weight: 500; letter-spacing: .04em;
+    text-transform: uppercase; cursor: pointer; transition: all .2s;
+  }
+  .prop-btn:hover { background: var(--bark); color: var(--cream); }
+
+  /* BOOKING */
+  .booking { background: var(--cream); }
+  .booking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+  .booking-form {
+    background: var(--white); border: 1px solid var(--sand);
+    border-radius: 4px; padding: 40px;
+  }
+  .form-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 400; color: var(--bark);
+    margin-bottom: 8px;
+  }
+  .form-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  label { font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  input, select, textarea {
+    border: 1px solid var(--sand); border-radius: 2px;
+    background: var(--cream); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    padding: 12px 14px; outline: none;
+    transition: border-color .2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--clay); }
+  textarea { resize: vertical; min-height: 80px; }
+  .submit-btn {
+    width: 100%; background: var(--bark); color: var(--cream);
+    border: none; border-radius: 2px; padding: 16px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    font-weight: 500; letter-spacing: .06em; text-transform: uppercase;
+    cursor: pointer; transition: background .2s; margin-top: 8px;
+  }
+  .submit-btn:hover { background: var(--clay); }
+  .booking-info { padding-top: 8px; }
+  .info-list { list-style: none; margin-bottom: 40px; }
+  .info-list li {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 16px 0; border-bottom: 1px solid var(--sand);
+    font-size: 14px;
+  }
+  .info-list li:last-child { border-bottom: none; }
+  .info-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--sand); display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0; font-size: 14px;
+  }
+  .info-text strong { display: block; font-weight: 500; color: var(--bark); margin-bottom: 2px; }
+  .info-text span { font-size: 13px; color: var(--muted); }
+  .whatsapp-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: #25D366; color: #fff; border-radius: 2px;
+    padding: 14px 24px; font-size: 13px; font-weight: 500;
+    letter-spacing: .04em; text-transform: uppercase;
+    text-decoration: none; transition: opacity .2s;
+  }
+  .whatsapp-btn:hover { opacity: .9; }
+
+  /* TESTIMONIALS */
+  .testimonials { background: var(--bark); }
+  .testimonials .section-label { color: var(--stone); }
+  .testimonials .section-title { color: var(--cream); }
+  .testimonials .section-title em { color: var(--stone); }
+  .testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 48px; }
+  .testi-card {
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 4px; padding: 28px;
+  }
+  .testi-stars { color: var(--stone); font-size: 14px; letter-spacing: 2px; margin-bottom: 16px; }
+  .testi-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 300; font-style: italic;
+    color: var(--cream); line-height: 1.5; margin-bottom: 20px;
+  }
+  .testi-author { font-size: 12px; color: var(--stone); font-weight: 500; letter-spacing: .05em; }
+
+  /* FOOTER */
+  footer {
+    background: var(--cream); border-top: 1px solid var(--sand);
+    padding: 40px 80px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; color: var(--bark);
+  }
+  .footer-note { font-size: 12px; color: var(--muted); }
+
+  /* SAVINGS BANNER */
+  .savings-banner {
+    background: var(--bark); color: var(--cream);
+    text-align: center; padding: 14px 24px;
+    font-size: 13px; letter-spacing: .03em;
+  }
+  .savings-banner strong { color: var(--stone); }
+
+  /* ── TABLET (≤900px) ── */
+  @media(max-width: 900px) {
+    nav { padding: 0 24px; }
+    nav .nav-links { display: none; }
+
+    .hero { grid-template-columns: 1fr; min-height: auto; }
+    .hero-left { padding: 48px 24px 40px; }
+    .hero-right { height: 280px; }
+    .hero-badge { bottom: 16px; left: 16px; padding: 12px 16px; }
+    .badge-num { font-size: 24px; }
+
+    section { padding: 56px 24px; }
+
+    .props-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .props-header p { text-align: left; max-width: 100%; }
+    .props-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .booking-grid { grid-template-columns: 1fr; gap: 40px; }
+    .booking-form { padding: 28px 20px; }
+    .form-row { grid-template-columns: 1fr; gap: 0; }
+
+    .testi-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    footer { flex-direction: column; gap: 10px; text-align: center; padding: 32px 24px; }
+  }
+
+  /* ── MOBILE (≤600px) ── */
+  @media(max-width: 600px) {
+    .savings-banner { font-size: 12px; padding: 10px 16px; }
+
+    nav { padding: 0 16px; height: 56px; }
+    .nav-logo { font-size: 18px; }
+    .nav-cta { padding: 8px 14px; font-size: 12px; }
+
+    .hero-left { padding: 36px 16px 32px; }
+    .hero-eyebrow { font-size: 10px; margin-bottom: 14px; }
+    .hero-title { font-size: 42px; margin-bottom: 18px; }
+    .hero-body { font-size: 14px; margin-bottom: 28px; }
+    .hero-actions { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .btn-primary { width: 100%; text-align: center; padding: 14px 24px; }
+    .hero-right { height: 240px; }
+    .hero-badge { display: none; }
+
+    section { padding: 48px 16px; }
+    .section-title { font-size: 32px; }
+
+    .props-grid { grid-template-columns: 1fr; gap: 16px; }
+    .prop-features { flex-wrap: wrap; gap: 8px 14px; }
+    .prop-img { height: 200px; }
+
+    .booking-form { padding: 24px 16px; border-radius: 4px; }
+    .form-title { font-size: 22px; }
+    input, select, textarea { font-size: 16px; }
+
+    .testi-grid { grid-template-columns: 1fr; }
+    .testi-text { font-size: 16px; }
+
+    footer { padding: 28px 16px; gap: 8px; }
+    .footer-note:last-child { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="savings-banner">
+  Book directly and save — no Airbnb guest fees. <strong>Up to 14% cheaper</strong> when you book with us.
+</div>
+
+<nav>
+  <a href="#" class="nav-logo">Lekki Stays</a>
+  <ul class="nav-links">
+    <li><a href="#properties">Properties</a></li>
+    <li><a href="#booking">Book</a></li>
+    <li><a href="#about">About</a></li>
+  </ul>
+  <a href="#booking" class="nav-cta">Book direct</a>
+</nav>
+
+<section class="hero" style="padding:0">
+  <div class="hero-left">
+    <p class="hero-eyebrow">Luxury short-let · Victoria Island · Lekki</p>
+    <h1 class="hero-title">
+      Stay like<br>you <em>live</em><br>here.
+    </h1>
+    <p class="hero-body">
+      Curated apartments in Lagos's finest neighbourhoods. 
+      Fully serviced, instantly bookable — no platform fees, no middlemen.
+    </p>
+    <div class="hero-actions">
+      <a href="#booking" class="btn-primary">Reserve your stay</a>
+      <a href="#properties" class="btn-ghost">View properties →</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-img-placeholder">
+      <div class="img-label">Your property<br>photography here</div>
+    </div>
+    <div class="hero-badge">
+      <div class="badge-num">4.96</div>
+      <div class="badge-label">Average guest rating · 200+ stays</div>
+    </div>
+  </div>
+</section>
+
+<section class="properties" id="properties">
+  <div class="props-header">
+    <div>
+      <p class="section-label">Our properties</p>
+      <h2 class="section-title">Every home,<br><em>handpicked.</em></h2>
+    </div>
+    <p style="font-size:13px;color:var(--muted);max-width:260px;text-align:right">
+      All apartments are self-contained, fully furnished and serviced weekly.
+    </p>
+  </div>
+  <div class="props-grid">
+    <div class="prop-card">
+      <div class="prop-img">
+        <div class="prop-tag">Available</div>
+        <span class="prop-img-label">Living area photo</span>
+      </div>
+      <div class="prop-body">
+        <div class="prop-name">The Eko Suite</div>
+        <div class="prop-loc">Victoria Island, Lagos</div>
+        <div class="prop-features">
+          <span class="prop-feature">2 beds</span>
+          <span class="prop-feature">2 baths</span>
+          <span class="prop-feature">Pool access</span>
+          <span class="prop-feature">24hr power</span>
+        </div>
+        <div class="prop-price-row">
+          <div class="prop-price">₦85,000 <span>/ night</span></div>
+          <button class="prop-btn" onclick="document.getElementById('booking').scrollIntoView({behavior:'smooth'})">Book</button>
+        </div>
+      </div>
+    </div>
+    <div class="prop-card">
+      <div class="prop-img prop-img-2">
+        <div class="prop-tag">Available</div>
+        <span class="prop-img-label">Bedroom photo</span>
+      </div>
+      <div class="prop-body">
+        <div class="prop-name">Lekki Phase 1 Penthouse</div>
+        <div class="prop-loc">Lekki Phase 1, Lagos</div>
+        <div class="prop-features">
+          <span class="prop-feature">3 beds</span>
+          <span class="prop-feature">3 baths</span>
+          <span class="prop-feature">Rooftop</span>
+          <span class="prop-feature">Gym</span>
+        </div>
+        <div class="prop-price-row">
+          <div class="prop-price">₦120,000 <span>/ night</span></div>
+          <button class="prop-btn" onclick="document.getElementById('booking').scrollIntoView({behavior:'smooth'})">Book</button>
+        </div>
+      </div>
+    </div>
+    <div class="prop-card">
+      <div class="prop-img prop-img-3">
+        <div class="prop-tag">Available</div>
+        <span class="prop-img-label">Kitchen / dining photo</span>
+      </div>
+      <div class="prop-body">
+        <div class="prop-name">Ikoyi Garden Flat</div>
+        <div class="prop-loc">Ikoyi, Lagos</div>
+        <div class="prop-features">
+          <span class="prop-feature">1 bed</span>
+          <span class="prop-feature">1 bath</span>
+          <span class="prop-feature">Balcony</span>
+          <span class="prop-feature">Netflix</span>
+        </div>
+        <div class="prop-price-row">
+          <div class="prop-price">₦55,000 <span>/ night</span></div>
+          <button class="prop-btn" onclick="document.getElementById('booking').scrollIntoView({behavior:'smooth'})">Book</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="booking" id="booking">
+  <div class="booking-grid">
+    <div class="booking-form">
+      <div class="form-title">Reserve directly</div>
+      <div class="form-subtitle">No service fees. Instant confirmation via WhatsApp.</div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label>Check-in</label>
+          <input type="date" />
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Check-out</label>
+          <input type="date" />
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:16px">
+        <label>Property</label>
+        <select>
+          <option>The Eko Suite — Victoria Island</option>
+          <option>Lekki Phase 1 Penthouse</option>
+          <option>Ikoyi Garden Flat</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label>Full name</label>
+          <input type="text" placeholder="Your name" />
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>WhatsApp number</label>
+          <input type="tel" placeholder="+234 800 000 0000" />
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:16px">
+        <label>Special requests (optional)</label>
+        <textarea placeholder="Airport pickup, early check-in, etc."></textarea>
+      </div>
+      <button class="submit-btn" onclick="alert('Demo only — in the real site this sends a WhatsApp message instantly.')">
+        Send booking request
+      </button>
+    </div>
+    <div class="booking-info">
+      <p class="section-label">Why book direct</p>
+      <h2 class="section-title">Skip the<br><em>platform fees.</em></h2>
+      <ul class="info-list" style="margin-top:28px">
+        <li>
+          <div class="info-icon">₦</div>
+          <div class="info-text">
+            <strong>Save up to 14% on every booking</strong>
+            <span>Airbnb charges guests a service fee. Booking direct means you keep that money.</span>
+          </div>
+        </li>
+        <li>
+          <div class="info-icon">✓</div>
+          <div class="info-text">
+            <strong>Instant WhatsApp confirmation</strong>
+            <span>You'll receive a message within minutes with your booking details.</span>
+          </div>
+        </li>
+        <li>
+          <div class="info-icon">↻</div>
+          <div class="info-text">
+            <strong>Flexible cancellation</strong>
+            <span>Plans change. We offer 48-hour free cancellation on all direct bookings.</span>
+          </div>
+        </li>
+        <li>
+          <div class="info-icon">★</div>
+          <div class="info-text">
+            <strong>Repeat guest discounts</strong>
+            <span>Book twice and receive 10% off all future stays, automatically.</span>
+          </div>
+        </li>
+      </ul>
+      <a href="https://wa.me/2348000000000" class="whatsapp-btn" target="_blank">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Chat on WhatsApp
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="testimonials">
+  <p class="section-label">Guest reviews</p>
+  <h2 class="section-title">What guests <em>say.</em></h2>
+  <div class="testi-grid">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">"Absolutely beautiful apartment. Cleaner and better appointed than the photos. Will 100% be back for December."</p>
+      <div class="testi-author">Adaeze O. — London, UK</div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">"Booked direct and saved almost ₦40,000 vs the Airbnb price. The host responded on WhatsApp within 5 minutes. Exceptional."</p>
+      <div class="testi-author">Emeka T. — Houston, USA</div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">"This is the standard every Lagos short-let should meet. The booking process was seamless and the apartment was spotless."</p>
+      <div class="testi-author">Tunde B. — Lagos</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Lekki Stays</div>
+  <div class="footer-note">
+    Direct bookings · No platform fees · Lagos, Nigeria
+  </div>
+  <div class="footer-note" style="font-size:11px;opacity:.6">
+    Site built by Pubyana
+  </div>
+</footer>
+
+</body>
+</html>
