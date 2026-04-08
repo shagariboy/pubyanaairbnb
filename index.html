@@ -967,7 +967,7 @@
     Direct bookings · No platform fees · Lagos, Nigeria
   </div>
   <div class="footer-note" style="font-size:11px;opacity:.6">
-    Site built by Pubyana
+    Site built by [Your Name] · yourwebsite.com
   </div>
 </footer>
 
@@ -979,6 +979,7 @@ const PAYSTACK_PUBLIC_KEY = 'pk_test_e55dcf1ddd9f18c2e1dd24f554de0fec88f22d4e'; 
 const CLEANING_FEE = 10000;
 
 // ── EMAIL JS SETUP (FREE TIER) ──
+// IMPORTANT: For production use, replace these with your own EmailJS keys
 // Get your FREE EmailJS keys from: https://dashboard.emailjs.com
 // 1. Sign up at emailjs.com (free)
 // 2. Create a service (Gmail recommended)
@@ -989,9 +990,43 @@ const EMAILJS_TEMPLATE_GUEST = 'template_9y4eeax';
 const EMAILJS_TEMPLATE_ADMIN = 'template_d3n7vmw';
 const EMAILJS_PUBLIC_KEY = 'teNl4WUP9Sj8LxBNR';
 
-// Initialize EmailJS (FREE: 200 emails/month)
-if (EMAILJS_PUBLIC_KEY) {
-  emailjs.init(EMAILJS_PUBLIC_KEY);
+// Simple notification function
+function showNotification(message, type = 'info') {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${type === 'success' ? '#e8f5ee' : type === 'warning' ? '#fff3e0' : '#f5f5f5'};
+    border: 1px solid ${type === 'success' ? '#4CAF7D' : type === 'warning' ? '#f59e0b' : '#ccc'};
+    color: ${type === 'success' ? '#1a5c35' : type === 'warning' ? '#92400e' : '#333'};
+    padding: 12px 16px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 10000;
+    max-width: 300px;
+    font-size: 14px;
+    line-height: 1.4;
+  `;
+  notification.textContent = message;
+  
+  document.body.appendChild(notification);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification);
+    }
+  }, 5000);
+}
+
+// Helper function to format date as YYYY-MM-DD in local timezone
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // ── SETTINGS (synced from admin panel via ls_settings) ──
@@ -1170,7 +1205,7 @@ function getBlockedDatesForProperty(propName) {
       let day = new Date(b.checkin);
       const end = new Date(b.checkout);
       while (day < end) {
-        blocked.add(day.toISOString().split('T')[0]);
+        blocked.add(formatLocalDate(day));
         day.setDate(day.getDate() + 1);
       }
     });
@@ -1181,17 +1216,13 @@ function getBlockedDatesForProperty(propName) {
 function renderBookingCalendar(propName, checkin, checkout, forceOpen = false, monthOffset = 0) {
   const cal = document.getElementById('bookingCalendar');
   if (!cal) return;
-  if (!propName) {
-    if (forceOpen) cal.style.display = 'none';
-    return;
-  }
 
   cal.setAttribute('data-month-offset', monthOffset);
   cal.setAttribute('data-prop-name', propName);
   cal.setAttribute('data-checkin', checkin || '');
   cal.setAttribute('data-checkout', checkout || '');
 
-  const blocked = getBlockedDatesForProperty(propName);
+  const blocked = propName ? getBlockedDatesForProperty(propName) : new Set();
   const today = new Date();
   const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const first = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
@@ -1206,17 +1237,25 @@ function renderBookingCalendar(propName, checkin, checkout, forceOpen = false, m
   for (let i = 0; i < startWeekday; i++) dayCells.push('<div></div>');
   for (let day = 1; day <= days; day++) {
     const date = new Date(year, first.getMonth(), day);
-    const dateKey = date.toISOString().split('T')[0];
+    const dateKey = formatLocalDate(date);
     const classes = ['calendar-date'];
     const isBooked = blocked.has(dateKey);
     const isPast = date < todayStart;
     const isSelectedStart = selectedStart && date.toDateString() === selectedStart.toDateString();
-    if (isBooked) classes.push('booked');
-    else if (isPast) classes.push('disabled');
+    const noPropertySelected = !propName;
+    
+    if (noPropertySelected) {
+      classes.push('disabled');
+    } else if (isBooked) {
+      classes.push('booked');
+    } else if (isPast) {
+      classes.push('disabled');
+    }
+    
     if (isSelectedStart && !selectedEnd) classes.push('selected');
     if (selectedStart && selectedEnd && date >= selectedStart && date < selectedEnd) classes.push('range');
     if (date.toDateString() === today.toDateString()) classes.push('today');
-    const onClick = (!isBooked && !isPast) ? `onclick="pickBookingDate('${dateKey}')"` : '';
+    const onClick = (!noPropertySelected && !isBooked && !isPast) ? `onclick="pickBookingDate('${dateKey}')"` : '';
     dayCells.push(`<div class="${classes.join(' ')}" ${onClick}>${day}</div>`);
   }
 
@@ -1236,10 +1275,12 @@ function renderBookingCalendar(propName, checkin, checkout, forceOpen = false, m
 
   cal.innerHTML = monthHtml + `
     <div class="calendar-legend">
+      ${!propName ? '<span style="color: var(--muted); font-style: italic;">Select a property above to view availability</span>' : `
       <span><span class="tag" style="background:#fdecea"></span> Booked</span>
       <span><span class="tag" style="background:rgba(76,175,125,0.24);border:1px solid rgba(76,175,125,0.35)"></span> Selected date</span>
       <span><span class="tag" style="background:rgba(76,175,125,0.14);border:1px solid rgba(76,175,125,0.25)"></span> Selected range</span>
       <span><span class="tag" style="background:transparent;border:1px solid var(--clay);width:10px;height:10px;border-radius:50%"></span> Today</span>
+      `}
     </div>`;
   if (forceOpen) {
     cal.style.display = 'block';
@@ -1258,17 +1299,13 @@ function showBookingCalendar() {
 function renderCheckoutCalendar(propName, checkin, checkout, forceOpen = false, monthOffset = 1) {
   const cal = document.getElementById('checkoutCalendar');
   if (!cal) return;
-  if (!propName) {
-    if (forceOpen) cal.style.display = 'none';
-    return;
-  }
 
   cal.setAttribute('data-month-offset', monthOffset);
   cal.setAttribute('data-prop-name', propName);
   cal.setAttribute('data-checkin', checkin || '');
   cal.setAttribute('data-checkout', checkout || '');
 
-  const blocked = getBlockedDatesForProperty(propName);
+  const blocked = propName ? getBlockedDatesForProperty(propName) : new Set();
   const today = new Date();
   const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const selectedStart = checkin ? new Date(checkin) : null;
@@ -1286,17 +1323,25 @@ function renderCheckoutCalendar(propName, checkin, checkout, forceOpen = false, 
   for (let i = 0; i < startWeekday; i++) dayCells.push('<div></div>');
   for (let day = 1; day <= days; day++) {
     const date = new Date(year, first.getMonth(), day);
-    const dateKey = date.toISOString().split('T')[0];
+    const dateKey = formatLocalDate(date);
     const classes = ['calendar-date'];
     const isBooked = blocked.has(dateKey);
     const isPast = date <= todayStart || (selectedStart && date <= selectedStart);
     const isSelectedEnd = selectedEnd && date.toDateString() === selectedEnd.toDateString();
-    if (isBooked) classes.push('booked');
-    else if (isPast) classes.push('disabled');
+    const noPropertySelected = !propName;
+    
+    if (noPropertySelected) {
+      classes.push('disabled');
+    } else if (isBooked) {
+      classes.push('booked');
+    } else if (isPast) {
+      classes.push('disabled');
+    }
+    
     if (isSelectedEnd && selectedStart) classes.push('selected');
     if (selectedStart && selectedEnd && date > selectedStart && date <= selectedEnd) classes.push('range');
     if (date.toDateString() === today.toDateString()) classes.push('today');
-    const onClick = (!isBooked && !isPast) ? `onclick="pickCheckoutDate('${dateKey}')"` : '';
+    const onClick = (!noPropertySelected && !isBooked && !isPast) ? `onclick="pickCheckoutDate('${dateKey}')"` : '';
     dayCells.push(`<div class="${classes.join(' ')}" ${onClick}>${day}</div>`);
   }
 
@@ -1316,10 +1361,12 @@ function renderCheckoutCalendar(propName, checkin, checkout, forceOpen = false, 
 
   cal.innerHTML = monthHtml + `
     <div class="calendar-legend">
+      ${!propName ? '<span style="color: var(--muted); font-style: italic;">Select a property above to view availability</span>' : `
       <span><span class="tag" style="background:#fdecea"></span> Booked</span>
       <span><span class="tag" style="background:rgba(76,175,125,0.24);border:1px solid rgba(76,175,125,0.35)"></span> Selected date</span>
       <span><span class="tag" style="background:rgba(76,175,125,0.14);border:1px solid rgba(76,175,125,0.25)"></span> Selected range</span>
       <span><span class="tag" style="background:transparent;border:1px solid var(--clay);width:10px;height:10px;border-radius:50%"></span> Today</span>
+      `}
     </div>`;
   if (forceOpen) {
     cal.style.display = 'block';
@@ -1336,6 +1383,12 @@ function showCheckoutCalendar() {
 }
 
 function pickBookingDate(dateKey) {
+  const propValue = document.getElementById('fProperty').value;
+  if (!propValue) {
+    showNotification('Please select a property first', 'warning');
+    return;
+  }
+  
   const checkinEl = document.getElementById('fCheckin');
   const checkoutEl = document.getElementById('fCheckout');
   checkinEl.value = dateKey;
@@ -1346,6 +1399,12 @@ function pickBookingDate(dateKey) {
 }
 
 function pickCheckoutDate(dateKey) {
+  const propValue = document.getElementById('fProperty').value;
+  if (!propValue) {
+    showNotification('Please select a property first', 'warning');
+    return;
+  }
+  
   const checkoutEl = document.getElementById('fCheckout');
   checkoutEl.value = dateKey;
   document.getElementById('checkoutCalendar').style.display = 'none';
@@ -1948,10 +2007,13 @@ function sendConfirmationEmail(reference) {
   emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_GUEST, guestEmailParams)
     .then(function(response) {
       console.log('✓ Guest confirmation email sent:', response.status);
+      // Show success message to user
+      showNotification('✓ Confirmation email sent to ' + bookingData.email, 'success');
     })
     .catch(function(error) {
       console.error('✗ Failed to send guest email:', error);
-      // Fallback to mailto if EmailJS fails
+      // Show error message and fallback
+      showNotification('⚠️ Email delivery failed. Please check your email settings.', 'warning');
       sendConfirmationEmailFallback(reference);
     });
 
@@ -1962,6 +2024,8 @@ function sendConfirmationEmail(reference) {
     })
     .catch(function(error) {
       console.error('✗ Failed to send admin email:', error);
+      // Admin email failure - could show a different notification
+      console.warn('Admin email failed - check EmailJS configuration');
     });
 }
 
