@@ -18,13 +18,14 @@
     --accent: #B5804D;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; overflow-x: hidden; }
   body {
     font-family: 'DM Sans', sans-serif;
     background: var(--cream);
     color: var(--text);
     font-size: 15px;
     line-height: 1.7;
+    overflow-x: hidden;
   }
   /* NAV */
   nav {
@@ -200,9 +201,56 @@
   .booking { background: var(--cream); }
   .booking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
   .booking-form {
+    position: relative;
     background: var(--white); border: 1px solid var(--sand);
     border-radius: 4px; padding: 40px;
   }
+  .date-picker-group { position: relative; }
+  .booking-calendar {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    width: min(280px, calc(100vw - 48px));
+    z-index: 15;
+    display: none;
+    padding: 16px;
+    border: 1px solid rgba(59,46,26,.12);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(0,0,0,.08);
+  }
+  .calendar-month {
+    min-width: 0;
+  }
+  .calendar-month-header {
+    font-size: 12px; font-weight: 600;
+    color: var(--bark); text-transform: uppercase;
+    letter-spacing: .12em; margin-bottom: 10px;
+  }
+  .calendar-weekdays,
+  .calendar-dates {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+    font-size: 11px; color: var(--muted);
+  }
+  .calendar-weekdays div,
+  .calendar-date {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 28px; border-radius: 6px;
+  }
+  .calendar-weekdays div { font-weight: 700; }
+  .calendar-date { background: #fff; color: var(--text); border: 1px solid transparent; cursor: pointer; }
+  .calendar-date.booked { background: #fdecea; color: #b02020; border-color: #f6c2c0; cursor: not-allowed; }
+  .calendar-date.disabled { background: #f5f5f5; color: #999; border-color: #e5e5e5; cursor: not-allowed; }
+  .calendar-date.today { border-color: var(--clay); }
+  .calendar-date.selected { background: rgba(76,175,125,0.24); color: var(--bark); border-color: rgba(76,175,125,0.35); }
+  .calendar-date.range { background: rgba(76,175,125,0.14); color: var(--bark); }
+  .calendar-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .calendar-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .calendar-legend .tag { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .calendar-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
+  .cal-prev-btn, .cal-next-btn { background: transparent; border: 1px solid var(--sand); color: var(--bark); width: 28px; height: 28px; border-radius: 4px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+  .cal-prev-btn:hover, .cal-next-btn:hover { background: var(--sand); }
+  .calendar-month-display { font-size: 14px; font-weight: 600; color: var(--bark); }
   .form-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: 28px; font-weight: 400; color: var(--bark);
@@ -211,6 +259,22 @@
   .form-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
   .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .property-select-group {
+    background: linear-gradient(135deg, var(--cream) 0%, var(--sand) 100%);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--stone);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    position: relative;
+  }
+  .property-select-group::before {
+    content: "🏠";
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 24px;
+    opacity: 0.6;
+  }
   label { font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
   input, select, textarea {
     border: 1px solid var(--sand); border-radius: 2px;
@@ -219,8 +283,35 @@
     padding: 12px 14px; outline: none;
     transition: border-color .2s;
   }
+  /* Custom select styling */
+  select {
+    appearance: none; /* Remove default arrow */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    padding-right: 40px; /* Space for arrow */
+    cursor: pointer;
+    position: relative;
+    font-weight: 500;
+    min-height: 48px;
+  }
+  select:focus {
+    border-color: var(--clay);
+    box-shadow: 0 0 0 3px rgba(139,111,71,0.1);
+  }
+  select:hover {
+    border-color: var(--stone);
+  }
   input:focus, select:focus, textarea:focus { border-color: var(--clay); }
   textarea { resize: vertical; min-height: 80px; }
+  /* Required field error state */
+  input[style*="borderColor: #E05C5C"], 
+  select[style*="borderColor: #E05C5C"], 
+  textarea[style*="borderColor: #E05C5C"] { 
+    border-color: #E05C5C !important; 
+    background-color: rgba(224, 92, 92, 0.05) !important;
+  }
   .submit-btn {
     width: 100%; background: var(--bark); color: var(--cream);
     border: none; border-radius: 2px; padding: 16px;
@@ -229,6 +320,34 @@
     cursor: pointer; transition: background .2s; margin-top: 8px;
   }
   .submit-btn:hover { background: var(--clay); }
+  .calendar-month {
+    min-width: 0;
+  }
+  .calendar-month-header {
+    font-size: 12px; font-weight: 600;
+    color: var(--bark); text-transform: uppercase;
+    letter-spacing: .12em; margin-bottom: 10px;
+  }
+  .calendar-weekdays,
+  .calendar-dates {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+    font-size: 11px; color: var(--muted);
+  }
+  .calendar-weekdays div,
+  .calendar-date {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 28px; border-radius: 4px;
+  }
+  .calendar-weekdays div { font-weight: 700; }
+  .calendar-date { background: #fff; color: var(--text); border: 1px solid transparent; cursor: pointer; }
+  .calendar-date.booked { background: #fdecea; color: #b02020; border-color: #f5c3c0; cursor: not-allowed; }
+  .calendar-date.disabled { background: #f5f5f5; color: #999; border-color: #e5e5e5; cursor: not-allowed; }
+  .calendar-date.today { border-color: var(--clay); }
+  .calendar-date.selected { background: rgba(76,175,125,0.24); color: var(--bark); border-color: rgba(76,175,125,0.35); }
+  .calendar-date.range { background: rgba(76,175,125,0.14); color: var(--bark); }
+  .calendar-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .calendar-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .calendar-legend .tag { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .booking-info { padding-top: 8px; }
   .info-list { list-style: none; margin-bottom: 40px; }
   .info-list li {
@@ -291,7 +410,17 @@
   }
   .savings-banner strong { color: var(--stone); }
 
-  /* ── TABLET (≤900px) ── */
+  .pay-tab {
+    flex: 1; padding: 10px 8px; border: 1px solid var(--sand);
+    background: var(--cream); color: var(--muted);
+    border-radius: 2px; font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    transition: all .2s; letter-spacing: .02em;
+  }
+  .pay-tab:hover { border-color: var(--clay); color: var(--bark); }
+  .pay-tab.active { background: var(--bark); color: var(--cream); border-color: var(--bark); }
+
+  /* TABLET (≤900px) */
   @media(max-width: 900px) {
     nav { padding: 0 24px; }
     nav .nav-links { display: none; }
@@ -311,46 +440,254 @@
     .booking-grid { grid-template-columns: 1fr; gap: 40px; }
     .booking-form { padding: 28px 20px; }
     .form-row { grid-template-columns: 1fr; gap: 0; }
+    .form-row .form-group { margin-bottom: 16px; }
 
     .testi-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
 
     footer { flex-direction: column; gap: 10px; text-align: center; padding: 32px 24px; }
+
+    /* Info list — prevent text overflow */
+    .info-list li { padding: 14px 0; }
+    .info-text span { word-break: break-word; }
   }
 
   /* ── MOBILE (≤600px) ── */
   @media(max-width: 600px) {
+    /* Prevent any horizontal overflow */
+    * { max-width: 100%; }
+    img, input, select, textarea, button { max-width: 100%; }
+
     .savings-banner { font-size: 12px; padding: 10px 16px; }
 
     nav { padding: 0 16px; height: 56px; }
     .nav-logo { font-size: 18px; }
     .nav-cta { padding: 8px 14px; font-size: 12px; }
 
+    .hero { grid-template-columns: 1fr; min-height: auto; }
     .hero-left { padding: 36px 16px 32px; }
     .hero-eyebrow { font-size: 10px; margin-bottom: 14px; }
-    .hero-title { font-size: 42px; margin-bottom: 18px; }
-    .hero-body { font-size: 14px; margin-bottom: 28px; }
-    .hero-actions { flex-direction: column; align-items: flex-start; gap: 12px; }
-    .btn-primary { width: 100%; text-align: center; padding: 14px 24px; }
-    .hero-right { height: 240px; }
+    .hero-title { font-size: 36px; margin-bottom: 18px; }
+    .hero-body { font-size: 14px; margin-bottom: 28px; max-width: 100%; }
+    .hero-actions { flex-direction: column; align-items: stretch; gap: 12px; }
+    .btn-primary { width: 100%; text-align: center; padding: 14px 24px; box-sizing: border-box; }
+    .btn-ghost { justify-content: center; }
+    .hero-right { height: 220px; }
     .hero-badge { display: none; }
 
     section { padding: 48px 16px; }
-    .section-title { font-size: 32px; }
+    .section-title { font-size: 28px; }
 
     .props-grid { grid-template-columns: 1fr; gap: 16px; }
-    .prop-features { flex-wrap: wrap; gap: 8px 14px; }
-    .prop-img { height: 200px; }
+    .prop-features { flex-wrap: wrap; gap: 8px 12px; }
+    .prop-img { height: 190px; }
+    .prop-body { padding: 16px; }
 
-    .booking-form { padding: 24px 16px; border-radius: 4px; }
+    /* Booking section */
+    .booking { padding: 48px 16px; }
+    .booking-grid { gap: 32px; }
+    .booking-form { padding: 20px 16px; border-radius: 4px; }
     .form-title { font-size: 22px; }
-    input, select, textarea { font-size: 16px; }
+    input, select, textarea { font-size: 16px; box-sizing: border-box; width: 100%; }
+    .form-row { display: flex; flex-direction: column; gap: 0; }
+    .form-row .form-group { margin-bottom: 16px; }
+    .property-select-group { padding: 16px; }
+    .property-select-group::before { top: 16px; right: 16px; font-size: 20px; }
 
+    /* Payment tabs */
+    .pay-tab { font-size: 11px; padding: 8px 4px; }
+
+    /* Price summary */
+    #priceSummary { padding: 14px; }
+    #priceSummary > div { flex-wrap: wrap; gap: 4px; }
+
+    /* Step 2 review */
+    #step2 > div:first-child { flex-wrap: wrap; gap: 8px; }
+
+    /* Bank transfer detail rows — prevent overflow */
+    #payTransfer strong { word-break: break-all; font-size: 13px; }
+    #payTransfer > div > div { flex-wrap: wrap; gap: 4px; }
+
+    /* Booking info (why book direct) */
+    .booking-info { padding-top: 0; }
+    .info-list { margin-bottom: 24px; }
+    .info-list li { gap: 12px; padding: 14px 0; align-items: flex-start; }
+    .info-icon { flex-shrink: 0; }
+    .info-text { min-width: 0; flex: 1; overflow-wrap: break-word; word-break: break-word; }
+    .info-text strong { display: block; margin-bottom: 2px; }
+    .info-text span { font-size: 12px; display: block; line-height: 1.5; }
+
+    /* WhatsApp button */
+    .whatsapp-btn { width: 100%; box-sizing: border-box; justify-content: center; }
+
+    /* Testimonials */
     .testi-grid { grid-template-columns: 1fr; }
     .testi-text { font-size: 16px; }
+    .testi-card { padding: 20px; }
 
     footer { padding: 28px 16px; gap: 8px; }
     .footer-note:last-child { display: none; }
   }
+
+/* CAROUSEL */
+.carousel {
+  position: absolute;
+  inset: 0;
+}
+.carousel img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.carousel img.active {
+  opacity: 1;
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+.modal-close {
+  position: sticky;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.1);
+  border: none;
+  color: #000;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.modal-close:hover {
+  background: rgba(0,0,0,0.2);
+}
+.modal-carousel {
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+}
+.modal-carousel-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.modal-carousel-img.active { opacity: 1; }
+.modal-img-placeholder {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--text);
+}
+.modal-header {
+  padding: 20px;
+  text-align: center;
+}
+.modal-header h2 {
+  margin: 0 0 5px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #000;
+}
+.modal-header p {
+  margin: 0;
+  color: #666;
+}
+.modal-price {
+  font-size: 20px;
+  font-weight: 600;
+  color: #000;
+  margin-top: 10px;
+}
+.modal-amenities {
+  padding: 20px;
+}
+.modal-amenities h3 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #000;
+}
+.modal-amenities-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.modal-amenity {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  color: #000;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.2s;
+}
+.modal-amenity:hover {
+  background: #e0e0e0;
+  border-color: #ccc;
+}
+.modal-actions {
+  padding: 20px;
+  text-align: center;
+  border-top: 1px solid #eee;
+  margin-top: 20px;
+}
+.modal-book-btn {
+  background: linear-gradient(45deg, var(--amber), var(--amber-light));
+  color: #000;
+  border: 2px solid var(--amber);
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(201, 138, 58, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.modal-book-btn:hover {
+  background: linear-gradient(45deg, var(--amber-light), var(--amber));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(201, 138, 58, 0.4);
+}
+
 </style>
 </head>
 <body>
@@ -360,7 +697,7 @@
 </div>
 
 <nav>
-  <a href="#" class="nav-logo">Lekki Stays</a>
+  <a href="#" class="nav-logo" id="siteBrandNav">Lekki Stays</a>
   <ul class="nav-links">
     <li><a href="#properties">Properties</a></li>
     <li><a href="#booking">Book</a></li>
@@ -405,110 +742,161 @@
       All apartments are self-contained, fully furnished and serviced weekly.
     </p>
   </div>
-  <div class="props-grid">
-    <div class="prop-card">
-      <div class="prop-img">
-        <div class="prop-tag">Available</div>
-        <span class="prop-img-label">Living area photo</span>
-      </div>
-      <div class="prop-body">
-        <div class="prop-name">The Eko Suite</div>
-        <div class="prop-loc">Victoria Island, Lagos</div>
-        <div class="prop-features">
-          <span class="prop-feature">2 beds</span>
-          <span class="prop-feature">2 baths</span>
-          <span class="prop-feature">Pool access</span>
-          <span class="prop-feature">24hr power</span>
-        </div>
-        <div class="prop-price-row">
-          <div class="prop-price">₦85,000 <span>/ night</span></div>
-          <button class="prop-btn" onclick="document.getElementById('booking').scrollIntoView({behavior:'smooth'})">Book</button>
-        </div>
-      </div>
-    </div>
-    <div class="prop-card">
-      <div class="prop-img prop-img-2">
-        <div class="prop-tag">Available</div>
-        <span class="prop-img-label">Bedroom photo</span>
-      </div>
-      <div class="prop-body">
-        <div class="prop-name">Lekki Phase 1 Penthouse</div>
-        <div class="prop-loc">Lekki Phase 1, Lagos</div>
-        <div class="prop-features">
-          <span class="prop-feature">3 beds</span>
-          <span class="prop-feature">3 baths</span>
-          <span class="prop-feature">Rooftop</span>
-          <span class="prop-feature">Gym</span>
-        </div>
-        <div class="prop-price-row">
-          <div class="prop-price">₦120,000 <span>/ night</span></div>
-          <button class="prop-btn" onclick="document.getElementById('booking').scrollIntoView({behavior:'smooth'})">Book</button>
-        </div>
-      </div>
-    </div>
-    <div class="prop-card">
-      <div class="prop-img prop-img-3">
-        <div class="prop-tag">Available</div>
-        <span class="prop-img-label">Kitchen / dining photo</span>
-      </div>
-      <div class="prop-body">
-        <div class="prop-name">Ikoyi Garden Flat</div>
-        <div class="prop-loc">Ikoyi, Lagos</div>
-        <div class="prop-features">
-          <span class="prop-feature">1 bed</span>
-          <span class="prop-feature">1 bath</span>
-          <span class="prop-feature">Balcony</span>
-          <span class="prop-feature">Netflix</span>
-        </div>
-        <div class="prop-price-row">
-          <div class="prop-price">₦55,000 <span>/ night</span></div>
-          <button class="prop-btn" onclick="document.getElementById('booking').scrollIntoView({behavior:'smooth'})">Book</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <div class="props-grid" id="props-grid"></div>
 </section>
 
 <section class="booking" id="booking">
   <div class="booking-grid">
     <div class="booking-form">
       <div class="form-title">Reserve directly</div>
-      <div class="form-subtitle">No service fees. Instant confirmation via WhatsApp.</div>
-      <div class="form-row">
-        <div class="form-group" style="margin-bottom:0">
-          <label>Check-in</label>
-          <input type="date" />
+      <div class="form-subtitle">No service fees. Pay securely online — instant WhatsApp confirmation.</div>
+
+      <!-- STEP 1: Details -->
+      <div id="step1">
+        <div class="form-row">
+          <div class="form-group date-picker-group" style="margin-bottom:0">
+            <label>Check-in</label>
+            <input type="text" id="fCheckin" readonly placeholder="Select check-in" onchange="calcPrice(); checkAvailability()" onfocus="showBookingCalendar()" />
+            <div id="bookingCalendar" class="booking-calendar"></div>
+          </div>
+          <div class="form-group date-picker-group" style="margin-bottom:0">
+            <label>Check-out</label>
+            <input type="text" id="fCheckout" readonly placeholder="Select check-out" onchange="calcPrice(); checkAvailability()" onfocus="showCheckoutCalendar()" />
+            <div id="checkoutCalendar" class="booking-calendar"></div>
+          </div>
         </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label>Check-out</label>
-          <input type="date" />
+        <div class="form-group property-select-group" style="margin-top:16px">
+          <label style="color: var(--bark); font-weight: 600;">Choose Your Property</label>
+          <select id="fProperty" onchange="calcPrice(); checkAvailability()" onfocus="showBookingCalendar()" onclick="showBookingCalendar()"></select>
+          <div id="availabilityBadge" style="display:none;margin-top:8px;padding:10px 14px;border-radius:4px;font-size:13px;font-weight:500"></div>
         </div>
-      </div>
-      <div class="form-group" style="margin-top:16px">
-        <label>Property</label>
-        <select>
-          <option>The Eko Suite — Victoria Island</option>
-          <option>Lekki Phase 1 Penthouse</option>
-          <option>Ikoyi Garden Flat</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <div class="form-group" style="margin-bottom:0">
-          <label>Full name</label>
-          <input type="text" placeholder="Your name" />
+        <div class="form-row" style="margin-top:16px">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Full name</label>
+            <input type="text" id="fName" placeholder="Your name" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>WhatsApp number</label>
+            <input type="tel" id="fPhone" placeholder="+234 800 000 0000" />
+          </div>
         </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label>WhatsApp number</label>
-          <input type="tel" placeholder="+234 800 000 0000" />
+        <div class="form-group" style="margin-top:16px">
+          <label>Email address (for receipt)</label>
+          <input type="email" id="fEmail" placeholder="you@email.com" />
         </div>
+        <div class="form-group">
+          <label>Special requests (optional)</label>
+          <textarea id="fNotes" placeholder="Airport pickup, early check-in, etc."></textarea>
+        </div>
+
+        <!-- Price summary -->
+        <div id="priceSummary" style="display:none;background:var(--cream);border:1px solid var(--sand);border-radius:4px;padding:16px;margin-bottom:20px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:8px">
+            <span id="psNights">— nights</span>
+            <span id="psNightRate">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:8px">
+            <span>Cleaning fee</span>
+            <span>₦10,000</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--sand)">
+            <span>Airbnb fees avoided</span>
+            <span style="color:#4CAF7D">-₦0 (direct booking)</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-weight:600;color:var(--bark)">
+            <span>Total</span>
+            <span id="psTotal" style="font-family:'Cormorant Garamond',serif;font-size:22px">—</span>
+          </div>
+        </div>
+
+        <button class="submit-btn" id="proceedBtn" onclick="proceedToPayment()">
+          Continue to payment →
+        </button>
       </div>
-      <div class="form-group" style="margin-top:16px">
-        <label>Special requests (optional)</label>
-        <textarea placeholder="Airport pickup, early check-in, etc."></textarea>
+
+      <!-- STEP 2: Payment -->
+      <div id="step2" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+          <button onclick="backToStep1()" style="background:none;border:1px solid var(--sand);color:var(--muted);padding:6px 12px;border-radius:2px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">← Back</button>
+          <span style="font-size:13px;color:var(--muted)">Review & pay</span>
+        </div>
+
+        <div style="background:var(--cream);border:1px solid var(--sand);border-radius:4px;padding:20px;margin-bottom:20px">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--bark);margin-bottom:12px" id="reviewProp">—</div>
+          <div style="font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px" id="reviewDates">—</div>
+          <div style="border-top:1px solid var(--sand);margin-top:14px;padding-top:14px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;font-weight:500;color:var(--bark)">Total due</span>
+            <span style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--bark)" id="reviewTotal">—</span>
+          </div>
+        </div>
+
+        <!-- Payment method tabs -->
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="pay-tab active" id="tab-card" onclick="setPayTab('card')">💳 Card</button>
+          <button class="pay-tab" id="tab-transfer" onclick="setPayTab('transfer')">🏦 Bank transfer</button>
+          <button class="pay-tab" id="tab-ussd" onclick="setPayTab('ussd')">📱 USSD</button>
+        </div>
+
+        <!-- Card -->
+        <div id="payCard">
+          <div style="background:var(--cream);border:1px dashed var(--sand);border-radius:4px;padding:20px;text-align:center;margin-bottom:16px">
+            <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Secured by</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--bark);letter-spacing:.04em">Paystack</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">256-bit SSL · PCI-DSS compliant · All Nigerian cards accepted</div>
+          </div>
+          <button class="submit-btn" id="payBtn" onclick="launchPaystack()">
+            Pay securely with Paystack
+          </button>
+        </div>
+
+        <!-- Bank transfer -->
+        <div id="payTransfer" style="display:none">
+          <div style="background:var(--cream);border:1px solid var(--sand);border-radius:4px;padding:20px;margin-bottom:16px">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px">Transfer details</div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px">
+              <span style="color:var(--muted)">Bank</span><strong id="bankNameEl">Guaranty Trust Bank (GTB)</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px">
+              <span style="color:var(--muted)">Account name</span><strong id="acctNameEl">Lekki Stays Ltd</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px">
+              <span style="color:var(--muted)">Account number</span>
+              <strong style="display:flex;align-items:center;gap:6px"><span id="acctNumberEl">0123456789</span> <span onclick="copyAcct()" style="font-size:11px;color:var(--accent);cursor:pointer;border:1px solid var(--sand);padding:2px 8px;border-radius:2px">Copy</span></strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:14px">
+              <span style="color:var(--muted)">Reference</span><strong id="transferRef">LKST-—</strong>
+            </div>
+          </div>
+          <div style="background:#fffbe6;border:1px solid #f0d060;border-radius:4px;padding:12px;font-size:12px;color:#7a6000;margin-bottom:16px">
+            ⚠️ Use the reference as your payment narration. After transfer, click the button below to notify us.
+          </div>
+          <button class="submit-btn" onclick="confirmTransfer()">I've completed the transfer</button>
+        </div>
+
+        <!-- USSD -->
+        <div id="payUssd" style="display:none">
+          <div style="background:var(--cream);border:1px solid var(--sand);border-radius:4px;padding:20px;margin-bottom:16px">
+            <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Dial the code for your bank:</div>
+            <div style="display:flex;flex-direction:column;gap:10px" id="ussdCodes"></div>
+          </div>
+          <button class="submit-btn" onclick="confirmTransfer()">I've paid via USSD</button>
+        </div>
+
+        <div id="payErrorMsg" style="display:none;background:#fdecea;border:1px solid #e05c5c;border-radius:4px;padding:12px;font-size:13px;color:#b02020;margin-top:12px"></div>
       </div>
-      <button class="submit-btn" onclick="alert('Demo only — in the real site this sends a WhatsApp message instantly.')">
-        Send booking request
-      </button>
+
+      <!-- STEP 3: Success -->
+      <div id="step3" style="display:none;text-align:center;padding:20px 0">
+        <div style="font-size:48px;margin-bottom:16px">🎉</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--bark);margin-bottom:8px">Booking confirmed!</div>
+        <div style="font-size:14px;color:var(--muted);max-width:320px;margin:0 auto 24px">
+          Payment received. Your booking is confirmed and a WhatsApp message has been sent to you.
+        </div>
+        <div style="background:#e8f5ee;border:1px solid #4CAF7D;border-radius:4px;padding:16px;margin-bottom:20px;text-align:left" id="confirmDetails"></div>
+        <a id="waConfirmLink" href="#" target="_blank" class="submit-btn" style="display:block;text-decoration:none;text-align:center;margin-top:0">
+          Open WhatsApp confirmation →
+        </a>
+      </div>
     </div>
     <div class="booking-info">
       <p class="section-label">Why book direct</p>
@@ -531,8 +919,8 @@
         <li>
           <div class="info-icon">↻</div>
           <div class="info-text">
-            <strong>Flexible cancellation</strong>
-            <span>Plans change. We offer 48-hour free cancellation on all direct bookings.</span>
+            <strong id="cancelPolicyHeading">Flexible cancellation</strong>
+            <span id="cancelPolicyText">Plans change. We offer 48-hour free cancellation on all direct bookings.</span>
           </div>
         </li>
         <li>
@@ -543,7 +931,7 @@
           </div>
         </li>
       </ul>
-      <a href="https://wa.me/2348000000000" class="whatsapp-btn" target="_blank">
+      <a href="https://wa.me/2348089238248" class="whatsapp-btn" id="waChatBtn" target="_blank">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
         Chat on WhatsApp
       </a>
@@ -574,14 +962,1159 @@
 </section>
 
 <footer>
-  <div class="footer-logo">Lekki Stays</div>
+  <div class="footer-logo" id="siteBrandFooter">Lekki Stays</div>
   <div class="footer-note">
     Direct bookings · No platform fees · Lagos, Nigeria
   </div>
   <div class="footer-note" style="font-size:11px;opacity:.6">
-    Site built by Pubyana
+    Site built by [Your Name] · yourwebsite.com
   </div>
 </footer>
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script>
+// ── CONFIG ──
+const PAYSTACK_PUBLIC_KEY = 'pk_test_e55dcf1ddd9f18c2e1dd24f554de0fec88f22d4e'; // Replace with your test public key
+const CLEANING_FEE = 10000;
+
+// ── EMAIL JS SETUP (FREE TIER) ──
+// Get your FREE EmailJS keys from: https://dashboard.emailjs.com
+// 1. Sign up at emailjs.com (free)
+// 2. Create a service (Gmail recommended)
+// 3. Create email templates
+// 4. Get: Service ID, Template ID, Public Key
+const EMAILJS_SERVICE_ID = 'service_5rg4jzd';
+const EMAILJS_TEMPLATE_GUEST = 'template_9y4eeax';
+const EMAILJS_TEMPLATE_ADMIN = 'template_d3n7vmw';
+const EMAILJS_PUBLIC_KEY = 'teNl4WUP9Sj8LxBNR';
+
+// Initialize EmailJS (FREE: 200 emails/month)
+if (EMAILJS_PUBLIC_KEY) {
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+}
+
+// ── SETTINGS (synced from admin panel via ls_settings) ──
+const SETTINGS_DEFAULTS_DEMO = {
+  fullName:     'Adaora Okafor',
+  email:        'admin@lekkistays.com',
+  whatsApp:     '2348089238248',
+  cancelPolicy: '48-hour free cancellation',
+  businessName: 'Lekki Stays',
+  domain:       'lekkistays.com',
+  bankName:     'Guaranty Trust Bank (GTB)',
+  acctName:     'Lekki Stays Ltd',
+  acctNumber:   '0123456789',
+};
+
+function getDemoSettings(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('ls_settings')||'null');
+    return Object.assign({}, SETTINGS_DEFAULTS_DEMO, saved||{});
+  } catch(e){ return Object.assign({}, SETTINGS_DEFAULTS_DEMO); }
+}
+
+// Normalise WhatsApp number to digits only (strip spaces, dashes, +)
+function normaliseWA(raw){
+  const digits = (raw||'').replace(/\D/g,'');
+  return digits.length >= 10 ? digits : '2348089238248';
+}
+
+// Apply all settings to visible DOM elements
+function applyDemoSettings(){
+  const s = getDemoSettings();
+  const wa = normaliseWA(s.whatsApp);
+
+  // Brand name
+  const brandNav    = document.getElementById('siteBrandNav');
+  const brandFooter = document.getElementById('siteBrandFooter');
+  if(brandNav)    brandNav.textContent    = s.businessName || 'Lekki Stays';
+  if(brandFooter) brandFooter.textContent = s.businessName || 'Lekki Stays';
+  document.title = (s.businessName||'Lekki Stays') + ' — Luxury Short-let, Lagos';
+
+  // Cancellation policy
+  const cancelEl = document.getElementById('cancelPolicyText');
+  if(cancelEl){
+    const policyMap = {
+      '48-hour free cancellation': 'Plans change. We offer 48-hour free cancellation on all direct bookings.',
+      '72-hour free cancellation': 'Plans change. We offer 72-hour free cancellation on all direct bookings.',
+      'Non-refundable':            'Please note all bookings are non-refundable. Contact us for special arrangements.',
+      'Flexible (full refund)':    'Full refund available if cancelled before check-in. Flexible for guests.',
+    };
+    cancelEl.textContent = policyMap[s.cancelPolicy] || policyMap['48-hour free cancellation'];
+  }
+
+  // WhatsApp chat button
+  const waChatBtn = document.getElementById('waChatBtn');
+  if(waChatBtn) waChatBtn.href = 'https://wa.me/' + wa;
+
+  // Cancellation policy heading
+  const headingMap = {
+    '48-hour free cancellation': 'Flexible cancellation',
+    '72-hour free cancellation': 'Flexible cancellation',
+    'Non-refundable':            'No refunds',
+    'Flexible (full refund)':    'Flexible cancellation',
+  };
+  const cancelHeading = document.getElementById('cancelPolicyHeading');
+  if(cancelHeading) cancelHeading.textContent = headingMap[s.cancelPolicy] || 'Flexible cancellation';
+
+  // Bank transfer details
+  const bankNameEl   = document.getElementById('bankNameEl');
+  const acctNameEl   = document.getElementById('acctNameEl');
+  const acctNumberEl = document.getElementById('acctNumberEl');
+  if(bankNameEl)   bankNameEl.textContent   = s.bankName   || 'Guaranty Trust Bank (GTB)';
+  if(acctNameEl)   acctNameEl.textContent   = s.acctName   || 'Lekki Stays Ltd';
+  if(acctNumberEl) acctNumberEl.textContent = s.acctNumber || '0123456789';
+
+  // Store resolved values for use in booking functions
+  window._OWNER_WA    = wa;
+  window._OWNER_EMAIL = s.email       || 'admin@lekkistays.com';
+  window._BUSINESS    = s.businessName || 'Lekki Stays';
+  window._ACCT_NUMBER = s.acctNumber  || '0123456789';
+  window._DOMAIN      = s.domain      || 'lekkistays.com';
+}
+
+// Use dynamic values in booking (falls back to hardcoded if not set yet)
+function OWNER_WA(){ return window._OWNER_WA || '2348089238248'; }
+function OWNER_EMAIL(){ return window._OWNER_EMAIL || 'admin@lekkistays.com'; }
+function BUSINESS(){ return window._BUSINESS || 'Lekki Stays'; }
+
+// Default properties — same seed as admin. Used when localStorage has no data yet.
+const DEFAULT_PROPERTIES = [
+  {id:1, name:'The Eko Suite', location:'Victoria Island', rate:85000, beds:2, baths:2, status:'available', amenities:['Swimming pool','24hr power (gen + NEPA)','Wifi (fibre)','Air conditioning']},
+  {id:2, name:'Lekki Phase 1 Penthouse', location:'Lekki Phase 1', rate:120000, beds:3, baths:3, status:'booked', amenities:['Rooftop access','Gym access','24hr power (gen + NEPA)','Wifi (fibre)']},
+  {id:3, name:'Ikoyi Garden Flat', location:'Ikoyi', rate:55000, beds:1, baths:1, status:'available', amenities:['Balcony','Smart TV / Netflix','Wifi (fibre)','Air conditioning']},
+];
+
+// Loaded once on page init — sourced from localStorage (written by admin panel)
+let siteProperties = [];
+
+function loadSiteProperties() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('ls_properties') || '[]');
+    siteProperties = saved.length ? saved : JSON.parse(JSON.stringify(DEFAULT_PROPERTIES));
+  } catch(e) {
+    siteProperties = JSON.parse(JSON.stringify(DEFAULT_PROPERTIES));
+  }
+}
+
+// Dynamic lookup helpers (replaces hardcoded PROPERTY_RATES / PROP_STORAGE_KEYS)
+function getPropRate(propName) {
+  const p = siteProperties.find(p => p.name === propName);
+  return p ? (p.rate || 85000) : 85000;
+}
+
+function getPropStatus(propName) {
+  const p = siteProperties.find(p => p.name === propName);
+  return p ? (p.status || 'available') : 'available';
+}
+
+// Colour palettes for property card backgrounds (cycles if more than 3)
+const CARD_GRADIENTS = [
+  'linear-gradient(160deg, #CDBFA0 0%, #B5A07C 100%)',
+  'linear-gradient(160deg, #C4B490 0%, #A08C64 100%)',
+  'linear-gradient(160deg, #D4C8B0 0%, #BCA882 100%)',
+  'linear-gradient(160deg, #C8BCA4 0%, #A89478 100%)',
+  'linear-gradient(160deg, #D0C4A8 0%, #B8A47E 100%)',
+];
+
+let bookingData = {};
+
+// ── AVAILABILITY CHECK ──
+// Returns 'available', 'booked', or 'maintenance' for a given property name
+function getPropertyStatus(propName) {
+  const status = getPropStatus(propName);
+  if (status === 'maintenance') return 'maintenance';
+
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const todayEnd = new Date(todayStart.getTime() + (1000 * 60 * 60 * 24));
+
+  const currentBookings = getConfirmedBookingsForProperty(propName);
+  const isBookedToday = currentBookings.some(b => isDateOverlap(todayStart, todayEnd, new Date(b.checkin), new Date(b.checkout)));
+
+  return isBookedToday ? 'booked' : 'available';
+}
+
+function getConfirmedBookingsForProperty(propName) {
+  try {
+    const all = JSON.parse(localStorage.getItem('ls_bookings') || '[]');
+    return all.filter(b => b.status === 'confirmed' && b.prop === propName);
+  } catch (e) {
+    return [];
+  }
+}
+
+function getPropertyCardStatus(propName) {
+  const status = getPropStatus(propName);
+  if (status === 'maintenance') return { label: 'Unavailable', bg: '#E05C5C' };
+
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const todayEnd = new Date(todayStart.getTime() + (1000 * 60 * 60 * 24));
+  if (isPropertyBookedForDates(propName, todayStart.toISOString().split('T')[0], todayEnd.toISOString().split('T')[0])) {
+    return { label: 'Booked today', bg: '#C98A3A' };
+  }
+
+  return { label: 'Available', bg: '' };
+}
+
+function isDateOverlap(startA, endA, startB, endB) {
+  return startA < endB && endA > startB;
+}
+
+function getBlockedDatesForProperty(propName) {
+  const blocked = new Set();
+  try {
+    getConfirmedBookingsForProperty(propName).forEach(b => {
+      let day = new Date(b.checkin);
+      const end = new Date(b.checkout);
+      while (day < end) {
+        blocked.add(day.toISOString().split('T')[0]);
+        day.setDate(day.getDate() + 1);
+      }
+    });
+  } catch (e) {}
+  return blocked;
+}
+
+function renderBookingCalendar(propName, checkin, checkout, forceOpen = false, monthOffset = 0) {
+  const cal = document.getElementById('bookingCalendar');
+  if (!cal) return;
+  if (!propName) {
+    if (forceOpen) cal.style.display = 'none';
+    return;
+  }
+
+  cal.setAttribute('data-month-offset', monthOffset);
+  cal.setAttribute('data-prop-name', propName);
+  cal.setAttribute('data-checkin', checkin || '');
+  cal.setAttribute('data-checkout', checkout || '');
+
+  const blocked = getBlockedDatesForProperty(propName);
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const first = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const monthName = first.toLocaleString('default', { month: 'long' });
+  const year = first.getFullYear();
+  const startWeekday = first.getDay();
+  const days = new Date(year, first.getMonth() + 1, 0).getDate();
+  const dayCells = [];
+  const selectedStart = checkin ? new Date(checkin) : null;
+  const selectedEnd = checkout ? new Date(checkout) : null;
+  
+  for (let i = 0; i < startWeekday; i++) dayCells.push('<div></div>');
+  for (let day = 1; day <= days; day++) {
+    const date = new Date(year, first.getMonth(), day);
+    const dateKey = date.toISOString().split('T')[0];
+    const classes = ['calendar-date'];
+    const isBooked = blocked.has(dateKey);
+    const isPast = date < todayStart;
+    const isSelectedStart = selectedStart && date.toDateString() === selectedStart.toDateString();
+    if (isBooked) classes.push('booked');
+    else if (isPast) classes.push('disabled');
+    if (isSelectedStart && !selectedEnd) classes.push('selected');
+    if (selectedStart && selectedEnd && date >= selectedStart && date < selectedEnd) classes.push('range');
+    if (date.toDateString() === today.toDateString()) classes.push('today');
+    const onClick = (!isBooked && !isPast) ? `onclick="pickBookingDate('${dateKey}')"` : '';
+    dayCells.push(`<div class="${classes.join(' ')}" ${onClick}>${day}</div>`);
+  }
+
+  const monthHtml = `
+    <div class="calendar-nav">
+      <button class="cal-prev-btn" onclick="event.stopPropagation(); event.preventDefault(); prevMonth('bookingCalendar')">←</button>
+      <div class="calendar-month-display">${monthName} ${year}</div>
+      <button class="cal-next-btn" onclick="event.stopPropagation(); event.preventDefault(); nextMonth('bookingCalendar')">→</button>
+    </div>
+    <div class="calendar-month">
+      <div class="calendar-weekdays">
+        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+      </div>
+      <div class="calendar-dates">${dayCells.join('')}</div>
+    </div>
+  `;
+
+  cal.innerHTML = monthHtml + `
+    <div class="calendar-legend">
+      <span><span class="tag" style="background:#fdecea"></span> Booked</span>
+      <span><span class="tag" style="background:rgba(76,175,125,0.24);border:1px solid rgba(76,175,125,0.35)"></span> Selected date</span>
+      <span><span class="tag" style="background:rgba(76,175,125,0.14);border:1px solid rgba(76,175,125,0.25)"></span> Selected range</span>
+      <span><span class="tag" style="background:transparent;border:1px solid var(--clay);width:10px;height:10px;border-radius:50%"></span> Today</span>
+    </div>`;
+  if (forceOpen) {
+    cal.style.display = 'block';
+  }
+}
+
+function showBookingCalendar() {
+  renderBookingCalendar(
+    document.getElementById('fProperty').value,
+    document.getElementById('fCheckin').value,
+    document.getElementById('fCheckout').value,
+    true
+  );
+}
+
+function renderCheckoutCalendar(propName, checkin, checkout, forceOpen = false, monthOffset = 1) {
+  const cal = document.getElementById('checkoutCalendar');
+  if (!cal) return;
+  if (!propName) {
+    if (forceOpen) cal.style.display = 'none';
+    return;
+  }
+
+  cal.setAttribute('data-month-offset', monthOffset);
+  cal.setAttribute('data-prop-name', propName);
+  cal.setAttribute('data-checkin', checkin || '');
+  cal.setAttribute('data-checkout', checkout || '');
+
+  const blocked = getBlockedDatesForProperty(propName);
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const selectedStart = checkin ? new Date(checkin) : null;
+  const selectedEnd = checkout ? new Date(checkout) : null;
+  
+  // Base month for checkout is checkin month + 1, or today's month + 1 if no checkin
+  const baseMonth = selectedStart ? new Date(selectedStart.getFullYear(), selectedStart.getMonth() + 1, 1) : new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  const first = new Date(baseMonth.getFullYear(), baseMonth.getMonth() + monthOffset, 1);
+  const monthName = first.toLocaleString('default', { month: 'long' });
+  const year = first.getFullYear();
+  const startWeekday = first.getDay();
+  const days = new Date(year, first.getMonth() + 1, 0).getDate();
+  const dayCells = [];
+  
+  for (let i = 0; i < startWeekday; i++) dayCells.push('<div></div>');
+  for (let day = 1; day <= days; day++) {
+    const date = new Date(year, first.getMonth(), day);
+    const dateKey = date.toISOString().split('T')[0];
+    const classes = ['calendar-date'];
+    const isBooked = blocked.has(dateKey);
+    const isPast = date <= todayStart || (selectedStart && date <= selectedStart);
+    const isSelectedEnd = selectedEnd && date.toDateString() === selectedEnd.toDateString();
+    if (isBooked) classes.push('booked');
+    else if (isPast) classes.push('disabled');
+    if (isSelectedEnd && selectedStart) classes.push('selected');
+    if (selectedStart && selectedEnd && date > selectedStart && date <= selectedEnd) classes.push('range');
+    if (date.toDateString() === today.toDateString()) classes.push('today');
+    const onClick = (!isBooked && !isPast) ? `onclick="pickCheckoutDate('${dateKey}')"` : '';
+    dayCells.push(`<div class="${classes.join(' ')}" ${onClick}>${day}</div>`);
+  }
+
+  const monthHtml = `
+    <div class="calendar-nav">
+      <button class="cal-prev-btn" onclick="event.stopPropagation(); event.preventDefault(); prevMonth('checkoutCalendar')">←</button>
+      <div class="calendar-month-display">${monthName} ${year}</div>
+      <button class="cal-next-btn" onclick="event.stopPropagation(); event.preventDefault(); nextMonth('checkoutCalendar')">→</button>
+    </div>
+    <div class="calendar-month">
+      <div class="calendar-weekdays">
+        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+      </div>
+      <div class="calendar-dates">${dayCells.join('')}</div>
+    </div>
+  `;
+
+  cal.innerHTML = monthHtml + `
+    <div class="calendar-legend">
+      <span><span class="tag" style="background:#fdecea"></span> Booked</span>
+      <span><span class="tag" style="background:rgba(76,175,125,0.24);border:1px solid rgba(76,175,125,0.35)"></span> Selected date</span>
+      <span><span class="tag" style="background:rgba(76,175,125,0.14);border:1px solid rgba(76,175,125,0.25)"></span> Selected range</span>
+      <span><span class="tag" style="background:transparent;border:1px solid var(--clay);width:10px;height:10px;border-radius:50%"></span> Today</span>
+    </div>`;
+  if (forceOpen) {
+    cal.style.display = 'block';
+  }
+}
+
+function showCheckoutCalendar() {
+  renderCheckoutCalendar(
+    document.getElementById('fProperty').value,
+    document.getElementById('fCheckin').value,
+    document.getElementById('fCheckout').value,
+    true
+  );
+}
+
+function pickBookingDate(dateKey) {
+  const checkinEl = document.getElementById('fCheckin');
+  const checkoutEl = document.getElementById('fCheckout');
+  checkinEl.value = dateKey;
+  checkoutEl.value = '';
+  document.getElementById('bookingCalendar').style.display = 'none';
+  calcPrice();
+  checkAvailability();
+}
+
+function pickCheckoutDate(dateKey) {
+  const checkoutEl = document.getElementById('fCheckout');
+  checkoutEl.value = dateKey;
+  document.getElementById('checkoutCalendar').style.display = 'none';
+  calcPrice();
+  checkAvailability();
+}
+
+document.addEventListener('click', function(event) {
+  const calCheckin = document.getElementById('bookingCalendar');
+  const calCheckout = document.getElementById('checkoutCalendar');
+  const checkinInput = document.getElementById('fCheckin');
+  const checkoutInput = document.getElementById('fCheckout');
+  const bookingForm = document.querySelector('.booking-form');
+  
+  if (calCheckin && !calCheckin.contains(event.target) && !checkinInput.contains(event.target)) {
+    calCheckin.style.display = 'none';
+  }
+  if (calCheckout && !calCheckout.contains(event.target) && !checkoutInput.contains(event.target)) {
+    calCheckout.style.display = 'none';
+  }
+});
+
+function isPropertyBookedForDates(propName, checkin, checkout) {
+  if (!checkin || !checkout) return false;
+  try {
+    const requestedStart = new Date(checkin);
+    const requestedEnd = new Date(checkout);
+    const confirmedBookings = getConfirmedBookingsForProperty(propName);
+    return confirmedBookings.some(b => {
+      const existingStart = new Date(b.checkin);
+      const existingEnd = new Date(b.checkout);
+      return isDateOverlap(requestedStart, requestedEnd, existingStart, existingEnd);
+    });
+  } catch (e) {
+    return false;
+  }
+}
+
+function checkAvailability() {
+  const propValue = document.getElementById('fProperty').value;
+  const checkin = document.getElementById('fCheckin').value;
+  const checkout = document.getElementById('fCheckout').value;
+  renderBookingCalendar(propValue, checkin, checkout);
+  renderCheckoutCalendar(propValue, checkin, checkout);
+  const badge = document.getElementById('availabilityBadge');
+  const proceedBtn = document.getElementById('proceedBtn');
+  const status = getPropertyStatus(propValue);
+
+  if (status === 'maintenance') {
+    badge.style.display = 'block';
+    badge.style.background = '#fff3e0';
+    badge.style.border = '1px solid #f59e0b';
+    badge.style.color = '#92400e';
+    badge.innerHTML = '🔧 <strong>This property is temporarily unavailable</strong> for maintenance. Please check back soon or choose another property.';
+    proceedBtn.disabled = true;
+    proceedBtn.style.opacity = '0.5';
+    proceedBtn.style.cursor = 'not-allowed';
+    return;
+  }
+
+  if (checkin && checkout && checkin >= checkout) {
+    badge.style.display = 'block';
+    badge.style.background = '#fdecea';
+    badge.style.border = '1px solid #e05c5c';
+    badge.style.color = '#b02020';
+    badge.innerHTML = '⚠️ Check-out date must be after check-in date.';
+    proceedBtn.disabled = true;
+    proceedBtn.style.opacity = '0.5';
+    proceedBtn.style.cursor = 'not-allowed';
+    return;
+  }
+
+  if (checkin && checkout && isPropertyBookedForDates(propValue, checkin, checkout)) {
+    badge.style.display = 'block';
+    badge.style.background = '#fdecea';
+    badge.style.border = '1px solid #e05c5c';
+    badge.style.color = '#b02020';
+    badge.innerHTML = '🔴 <strong>Oops! Those dates are already booked.</strong> Please pick a later check-in date.';
+    proceedBtn.disabled = true;
+    proceedBtn.style.opacity = '0.5';
+    proceedBtn.style.cursor = 'not-allowed';
+    return;
+  }
+
+  if (status === 'booked' && (!checkin || !checkout)) {
+    badge.style.display = 'block';
+    badge.style.background = '#fff7e6';
+    badge.style.border = '1px solid #f59e0b';
+    badge.style.color = '#92400e';
+    badge.innerHTML = '⚠️ This property may be booked today. Select your dates to verify availability.';
+    proceedBtn.disabled = false;
+    proceedBtn.style.opacity = '1';
+    proceedBtn.style.cursor = 'pointer';
+    return;
+  }
+
+  badge.style.display = 'block';
+  badge.style.background = '#e8f5ee';
+  badge.style.border = '1px solid #4CAF7D';
+  badge.style.color = '#1a5c35';
+  badge.innerHTML = '🟢 <strong>Available</strong> — ready to book!';
+  proceedBtn.disabled = false;
+  proceedBtn.style.opacity = '1';
+  proceedBtn.style.cursor = 'pointer';
+}
+
+// ── RENDER PROPERTY CARDS ──
+function renderPropertyCards() {
+  const grid = document.getElementById('props-grid');
+  if (!grid) return;
+  if (!siteProperties.length) {
+    grid.innerHTML = '<p style="color:var(--muted);font-size:14px">No properties listed yet.</p>';
+    return;
+  }
+  grid.innerHTML = siteProperties.map((p, i) => {
+    const cardStatus = getPropertyCardStatus(p.name);
+    const statusLabel = cardStatus.label;
+    const tagBg = cardStatus.bg;
+    // Priority: amenities saved by admin → legacy features field → bed/bath fallback
+    let features;
+    if(Array.isArray(p.amenities) && p.amenities.length){
+      // Show beds/baths first, then up to 4 amenities
+      const bedBath = [
+        p.beds ? p.beds+' bed'+(p.beds>1&&p.beds!=='Studio'?'s':'') : '',
+        p.baths ? p.baths+' bath'+(p.baths>1?'s':'') : ''
+      ].filter(Boolean);
+      const extras = p.amenities.slice(0, Math.max(0, 4 - bedBath.length));
+      features = [...bedBath, ...extras];
+    } else if(Array.isArray(p.features) && p.features.length){
+      features = p.features;
+    } else {
+      features = [
+        p.beds ? p.beds+' bed'+(p.beds>1&&p.beds!=='Studio'?'s':'') : '',
+        p.baths ? p.baths+' bath'+(p.baths>1?'s':'') : ''
+      ].filter(Boolean);
+    }
+    const grad = CARD_GRADIENTS[i % CARD_GRADIENTS.length];
+    const coverPhoto = Array.isArray(p.photos) && p.photos.length ? p.photos[0] : null;
+    const imgStyle = coverPhoto
+      ? `background:${grad};position:relative`
+      : `background:${grad}`;
+    return `
+      <div class="prop-card">
+        <div class="prop-img" style="${imgStyle}">
+          ${Array.isArray(p.photos) && p.photos.length
+            ? `<div class="carousel" id="carousel-${p.id}">
+                ${p.photos.map((photo, idx) => 
+                  `<img src="${photo}" class="carousel-img ${idx===0?'active':''}" />`
+                ).join('')}
+              </div>`
+            : `<span class="prop-img-label">${p.name}</span>`}
+          <div class="prop-tag" style="${tagBg?'background:'+tagBg:''};position:relative;z-index:1">${statusLabel}</div>
+        </div>
+        <div class="prop-body">
+          <div class="prop-name">${p.name}</div>
+          <div class="prop-loc">${p.location}, Lagos</div>
+          <div class="prop-features">
+            ${features.map(f=>'<span class="prop-feature">'+f+'</span>').join('')}
+          </div>
+          <div class="prop-price-row">
+            <div class="prop-price">₦${(p.rate||0).toLocaleString()} <span>/ night</span></div>
+            <button class="prop-btn" onclick="openPropertyModal(${p.id})">View Details</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function selectAndScroll(propName) {
+  const sel = document.getElementById('fProperty');
+  if (sel) {
+    sel.value = propName;
+    calcPrice();
+    checkAvailability();
+  }
+  document.getElementById('booking').scrollIntoView({behavior:'smooth'});
+}
+
+// ── RENDER PROPERTY SELECT ──
+function renderPropertySelect() {
+  const sel = document.getElementById('fProperty');
+  if (!sel) return;
+  sel.innerHTML = siteProperties.map(p =>
+    `<option value="${p.name}" data-rate="${p.rate||0}">${p.name} — ${p.location} (₦${(p.rate||0).toLocaleString()}/night)</option>`
+  ).join('');
+}
+
+// Run on page load
+
+// ── CAROUSEL AUTO SLIDE ──
+function initCarousels() {
+  document.querySelectorAll('.carousel').forEach(carousel => {
+    const images = carousel.querySelectorAll('.carousel-img');
+    let index = 0;
+    if (images.length <= 1) return;
+
+    setInterval(() => {
+      images[index].classList.remove('active');
+      index = (index + 1) % images.length;
+      images[index].classList.add('active');
+    }, 3000);
+  });
+}
+
+// ── PROPERTY MODAL ──
+function openPropertyModal(id) {
+  const p = siteProperties.find(prop => prop.id === id);
+  if (!p) return;
+
+  const modal = document.getElementById('propertyModal');
+  const content = document.getElementById('modalContent');
+
+  // Build carousel
+  let carouselHtml = '';
+  if (Array.isArray(p.photos) && p.photos.length) {
+    carouselHtml = `<div class="modal-carousel" id="modalCarousel-${p.id}">
+      ${p.photos.map((photo, idx) => `<img src="${photo}" class="modal-carousel-img ${idx === 0 ? 'active' : ''}" />`).join('')}
+    </div>`;
+  } else {
+    const grad = CARD_GRADIENTS[p.id % CARD_GRADIENTS.length];
+    carouselHtml = `<div class="modal-img-placeholder" style="background:${grad}"><span>${p.name}</span></div>`;
+  }
+
+  // Amenities
+  const bedBath = [
+    p.beds ? p.beds + ' bed' + (p.beds > 1 && p.beds !== 'Studio' ? 's' : '') : '',
+    p.baths ? p.baths + ' bath' + (p.baths > 1 ? 's' : '') : ''
+  ].filter(Boolean);
+  const allAmenities = [...bedBath, ...(p.amenities || [])];
+  const amenitiesHtml = allAmenities.map(a => `<span class="modal-amenity">${a}</span>`).join('');
+
+  // Details
+  const detailsHtml = `
+    <div class="modal-header">
+      <h2>${p.name}</h2>
+      <p>${p.location}, Lagos</p>
+      <p class="modal-price">₦${(p.rate || 0).toLocaleString()} <span>/ night</span></p>
+    </div>
+    ${carouselHtml}
+    <div class="modal-amenities">
+      <h3>Amenities</h3>
+      <div class="modal-amenities-list">${amenitiesHtml}</div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-book-btn" onclick="selectAndScroll('${p.name.replace(/'/g, "\\'")}'); closePropertyModal()">Book Now</button>
+    </div>
+  `;
+
+  content.innerHTML = detailsHtml;
+  modal.classList.add('open');
+
+  // Init carousel if multiple photos
+  if (p.photos && p.photos.length > 1) {
+    initModalCarousel(p.id);
+  }
+}
+
+function closePropertyModal() {
+  document.getElementById('propertyModal').classList.remove('open');
+}
+
+function initModalCarousel(id) {
+  const carousel = document.getElementById(`modalCarousel-${id}`);
+  if (!carousel) return;
+  const images = carousel.querySelectorAll('.modal-carousel-img');
+  let index = 0;
+  if (images.length <= 1) return;
+
+  setInterval(() => {
+    images[index].classList.remove('active');
+    index = (index + 1) % images.length;
+    images[index].classList.add('active');
+  }, 3000);
+}
+
+function prevMonth(calendarId) {
+  const cal = document.getElementById(calendarId);
+  const offset = parseInt(cal.getAttribute('data-month-offset')) || 0;
+  const propName = cal.getAttribute('data-prop-name');
+  const resolvedProp = (!propName || propName === 'null') ? (document.getElementById('fProperty').value || null) : propName;
+  const checkin = cal.getAttribute('data-checkin');
+  const checkout = cal.getAttribute('data-checkout');
+
+  if (calendarId === 'bookingCalendar') {
+    renderBookingCalendar(resolvedProp, checkin, checkout, true, offset - 1);
+  } else {
+    renderCheckoutCalendar(resolvedProp, checkin, checkout, true, offset - 1);
+  }
+}
+
+function nextMonth(calendarId) {
+  const cal = document.getElementById(calendarId);
+  const offset = parseInt(cal.getAttribute('data-month-offset')) || 0;
+  const propName = cal.getAttribute('data-prop-name');
+  const resolvedProp = (!propName || propName === 'null') ? (document.getElementById('fProperty').value || null) : propName;
+  const checkin = cal.getAttribute('data-checkin');
+  const checkout = cal.getAttribute('data-checkout');
+
+  if (calendarId === 'bookingCalendar') {
+    renderBookingCalendar(resolvedProp, checkin, checkout, true, offset + 1);
+  } else {
+    renderCheckoutCalendar(resolvedProp, checkin, checkout, true, offset + 1);
+  }
+}
+
+window.addEventListener('load', function() {
+  applyDemoSettings();   // apply brand, cancel policy, WA number, bank details from admin settings
+  loadSiteProperties();
+  renderPropertyCards(); initCarousels();
+  renderPropertySelect();
+  checkAvailability();
+});
+
+// Listen for localStorage changes to update properties in real-time
+window.addEventListener('storage', function() {
+  loadSiteProperties();
+  renderPropertyCards(); initCarousels();
+  renderPropertySelect();
+});
+
+// Polling fallback for localStorage changes (in case storage event doesn't fire)
+let lastProperties = JSON.stringify(localStorage.getItem('ls_properties'));
+setInterval(() => {
+  const current = JSON.stringify(localStorage.getItem('ls_properties'));
+  if (current !== lastProperties) {
+    loadSiteProperties();
+    renderPropertyCards();
+    initCarousels();
+    renderPropertySelect();
+    lastProperties = current;
+  }
+}, 2000); // Check every 2 seconds
+
+// Listen for localStorage changes from admin panel
+window.addEventListener('storage', (e) => {
+  if (e.key === 'ls_properties') {
+    loadSiteProperties();
+    renderPropertyCards();
+    initCarousels();
+    renderPropertySelect();
+  }
+});
+
+// ── PRICE CALCULATOR ──
+function calcPrice() {
+  const checkin  = document.getElementById('fCheckin').value;
+  const checkout = document.getElementById('fCheckout').value;
+  const prop     = document.getElementById('fProperty').value;
+  const summary  = document.getElementById('priceSummary');
+
+  if (!checkin || !checkout || checkin >= checkout) { summary.style.display='none'; return; }
+
+  const nights = Math.round((new Date(checkout) - new Date(checkin)) / (1000*60*60*24));
+  const rate   = getPropRate(prop);
+  const subtotal = rate * nights;
+  const total  = subtotal + CLEANING_FEE;
+
+  document.getElementById('psNights').textContent    = nights + ' night' + (nights!==1?'s':'') + ' × ₦' + rate.toLocaleString();
+  document.getElementById('psNightRate').textContent  = '₦' + subtotal.toLocaleString();
+  document.getElementById('psTotal').textContent      = '₦' + total.toLocaleString();
+  summary.style.display = 'block';
+
+  bookingData.nights  = nights;
+  bookingData.rate    = rate;
+  bookingData.total   = total;
+  bookingData.checkin  = checkin;
+  bookingData.checkout = checkout;
+  bookingData.prop     = prop;
+}
+
+// ── STEP 1 → 2 ──
+function proceedToPayment() {
+  const name    = document.getElementById('fName').value.trim();
+  const phone   = document.getElementById('fPhone').value.trim();
+  const email   = document.getElementById('fEmail').value.trim();
+  const checkin  = document.getElementById('fCheckin').value;
+  const checkout = document.getElementById('fCheckout').value;
+  const prop     = document.getElementById('fProperty').value;
+
+  // Clear previous error states
+  ['fName', 'fPhone', 'fEmail', 'fCheckin', 'fCheckout', 'fProperty'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.borderColor = '';
+  });
+
+  // Validate and collect errors
+  const errors = [];
+  
+  if (!name) { 
+    document.getElementById('fName').style.borderColor = '#E05C5C';
+    errors.push('Name');
+  }
+  
+  if (!phone) { 
+    document.getElementById('fPhone').style.borderColor = '#E05C5C';
+    errors.push('Phone number');
+  }
+  
+  if (!email) { 
+    document.getElementById('fEmail').style.borderColor = '#E05C5C';
+    errors.push('Email');
+  }
+  
+  if (!checkin) { 
+    document.getElementById('fCheckin').style.borderColor = '#E05C5C';
+    errors.push('Check-in date');
+  }
+  
+  if (!checkout) { 
+    document.getElementById('fCheckout').style.borderColor = '#E05C5C';
+    errors.push('Check-out date');
+  }
+  
+  if (checkin && checkout && checkin >= checkout) { 
+    document.getElementById('fCheckin').style.borderColor = '#E05C5C';
+    document.getElementById('fCheckout').style.borderColor = '#E05C5C';
+    alert('⚠️ Check-out date must be after check-in date.'); 
+    return; 
+  }
+  
+  // Check for date conflicts with existing bookings
+  if (checkDateConflict(prop, checkin, checkout)) {
+    checkAvailability();
+    return;
+  }
+  
+  if (errors.length) {
+    const fieldList = errors.join(', ');
+    alert('⚠️ Please fill in all required fields:\n\n• ' + errors.join('\n• '));
+    return;
+  }
+
+  // Final availability guard before payment
+  if (checkDateConflict(prop, checkin, checkout) || isPropertyBookedForDates(prop, checkin, checkout)) {
+    alert('Sorry, these dates are no longer available. Please choose another date range.');
+    return;
+  }
+  const status = getPropertyStatus(prop);
+  if (status === 'maintenance') {
+    alert('Sorry, this property is temporarily unavailable. Please choose another property.');
+    return;
+  }
+
+  bookingData.name   = name;
+  bookingData.phone  = phone;
+  bookingData.email  = email;
+  bookingData.notes  = document.getElementById('fNotes').value.trim();
+  bookingData.ref    = 'LKST-' + Date.now().toString(36).toUpperCase();
+
+  document.getElementById('reviewProp').textContent  = bookingData.prop;
+  document.getElementById('reviewDates').innerHTML   =
+    '<span>' + bookingData.checkin + ' → ' + bookingData.checkout + ' · ' + bookingData.nights + ' nights</span>' +
+    '<span style="margin-top:4px">Guest: ' + bookingData.name + '</span>';
+  document.getElementById('reviewTotal').textContent = '₦' + bookingData.total.toLocaleString();
+  document.getElementById('transferRef').textContent  = bookingData.ref;
+
+  const ussdList = [
+    { bank:'GTB', code:'*737*' }, { bank:'Access Bank', code:'*901*' },
+    { bank:'First Bank', code:'*894*' }, { bank:'Zenith Bank', code:'*966*' },
+    { bank:'UBA', code:'*919*' }, { bank:'Opay', code:'*955*' },
+  ];
+  document.getElementById('ussdCodes').innerHTML = ussdList.map(u=>
+    `<div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-bottom:1px solid var(--sand)">
+       <span style="color:var(--muted)">${u.bank}</span>
+       <strong>${u.code}${bookingData.total}*0123456789#</strong>
+     </div>`
+  ).join('');
+
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = 'block';
+}
+
+function backToStep1() {
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step1').style.display = 'block';
+}
+
+// ── PAYMENT TABS ──
+function setPayTab(tab) {
+  ['card','transfer','ussd'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('pay' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t===tab ? 'block' : 'none';
+  });
+}
+
+// ── PAYSTACK ──
+function launchPaystack() {
+  if (typeof PaystackPop === 'undefined' || !PAYSTACK_PUBLIC_KEY || PAYSTACK_PUBLIC_KEY.includes('xxxxxxxx')) {
+    alert('Paystack not loaded or public key not configured. Please replace the placeholder in the code with your test public key.');
+    return;
+  }
+  const handler = PaystackPop.setup({
+    key: PAYSTACK_PUBLIC_KEY,
+    email: bookingData.email,
+    amount: bookingData.total * 100,
+    currency: 'NGN',
+    ref: bookingData.ref,
+    metadata: {
+      custom_fields: [
+        { display_name:'Guest name', variable_name:'guest_name', value:bookingData.name },
+        { display_name:'Property',   variable_name:'property',   value:bookingData.prop },
+        { display_name:'Check-in',   variable_name:'checkin',    value:bookingData.checkin },
+        { display_name:'Check-out',  variable_name:'checkout',   value:bookingData.checkout },
+        { display_name:'Phone',      variable_name:'phone',      value:bookingData.phone },
+      ]
+    },
+    callback: function(response) { onPaymentSuccess(response.reference); },
+    onClose: function() {}
+  });
+  handler.openIframe();
+}
+
+function simulatePayment() {
+  document.getElementById('payBtn').textContent = 'Processing…';
+  document.getElementById('payBtn').disabled = true;
+  setTimeout(function() { onPaymentSuccess(bookingData.ref + '-DEMO'); }, 1800);
+}
+
+// ── ON SUCCESS ──
+function onPaymentSuccess(reference) {
+  bookingData.payRef = reference;
+  saveBookingToStorage('pending');
+  markPropertyBooked(bookingData.prop);
+  sendConfirmationEmail(reference);
+
+  const adminMsg = encodeURIComponent(
+    '✅ *Payment Confirmed — ' + BUSINESS() + '*\n\n' +
+    '*Ref:* ' + reference + '\n' +
+    '*Property:* ' + bookingData.prop + '\n' +
+    '*Guest:* ' + bookingData.name + '\n' +
+    '*Email:* ' + bookingData.email + '\n' +
+    '*Phone:* ' + (bookingData.phone || '—') + '\n' +
+    '*Check-in:* ' + bookingData.checkin + '\n' +
+    '*Check-out:* ' + bookingData.checkout + '\n' +
+    '*Nights:* ' + bookingData.nights + '\n' +
+    '*Amount paid:* ₦' + bookingData.total.toLocaleString() + '\n' +
+    (bookingData.notes ? '*Requests:* ' + bookingData.notes + '\n' : '') +
+    '\n_Booking confirmed via lekkistays.com_'
+  );
+
+  const guestWA = bookingData.phone ? bookingData.phone.replace(/\D/g,'') : '';
+  const waLink = guestWA.length >= 10
+    ? 'https://wa.me/' + guestWA + '?text=' + encodeURIComponent('Hi ' + bookingData.name + ', your booking request for *' + bookingData.prop + '* (' + bookingData.checkin + ' – ' + bookingData.checkout + ') has been received. We\'re verifying your payment and will confirm shortly. Ref: ' + reference)
+    : 'https://wa.me/' + OWNER_WA() + '?text=' + adminMsg;
+
+  document.getElementById('confirmDetails').innerHTML =
+    '<div style="font-size:13px;color:#1a5c35;display:flex;flex-direction:column;gap:5px">' +
+    '<strong>✓ ' + bookingData.prop + '</strong>' +
+    '<span>' + bookingData.checkin + ' → ' + bookingData.checkout + ' · ' + bookingData.nights + ' nights</span>' +
+    '<span>Payment ref: ' + reference + '</span>' +
+    '<span style="font-size:12px;margin-top:2px">📧 Confirmation sent to <strong>' + bookingData.email + '</strong></span>' +
+    '<span style="font-weight:600;margin-top:4px">Total paid: ₦' + bookingData.total.toLocaleString() + '</span>' +
+    '</div>';
+
+  document.getElementById('waConfirmLink').href = waLink;
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step3').style.display = 'block';
+  setTimeout(function() { window.open('https://wa.me/' + OWNER_WA() + '?text=' + adminMsg, '_blank'); }, 1000);
+}
+
+// ── EMAIL CONFIRMATION ──
+function sendConfirmationEmail(reference) {
+  // Send via EmailJS if configured, otherwise fallback to mailto
+  if (EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY_HERE') {
+    sendConfirmationEmailFallback(reference);
+    return;
+  }
+
+  // Email to GUEST
+  const guestEmailParams = {
+    to_email: bookingData.email,
+    guest_name: bookingData.name,
+    property: bookingData.prop,
+    checkin: bookingData.checkin,
+    checkout: bookingData.checkout,
+    nights: bookingData.nights,
+    total_amount: '₦' + bookingData.total.toLocaleString(),
+    reference: reference,
+    business_name: BUSINESS(),
+    business_email: OWNER_EMAIL(),
+  };
+
+  // Email to ADMIN/OWNER
+  const adminEmailParams = {
+    to_email: OWNER_EMAIL(),
+    guest_name: bookingData.name,
+    guest_email: bookingData.email,
+    guest_phone: bookingData.phone || '—',
+    property: bookingData.prop,
+    checkin: bookingData.checkin,
+    checkout: bookingData.checkout,
+    nights: bookingData.nights,
+    total_amount: '₦' + bookingData.total.toLocaleString(),
+    reference: reference,
+    business_name: BUSINESS(),
+    guest_notes: bookingData.notes || 'None',
+  };
+
+  // Send guest confirmation
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_GUEST, guestEmailParams)
+    .then(function(response) {
+      console.log('✓ Guest confirmation email sent:', response.status);
+    })
+    .catch(function(error) {
+      console.error('✗ Failed to send guest email:', error);
+      // Fallback to mailto if EmailJS fails
+      sendConfirmationEmailFallback(reference);
+    });
+
+  // Send admin notification (async, don't block)
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ADMIN, adminEmailParams)
+    .then(function(response) {
+      console.log('✓ Admin notification email sent:', response.status);
+    })
+    .catch(function(error) {
+      console.error('✗ Failed to send admin email:', error);
+    });
+}
+
+// Fallback: Use mailto if EmailJS not configured
+function sendConfirmationEmailFallback(reference) {
+  const subject = encodeURIComponent('Booking Confirmed — ' + BUSINESS() + ' (' + bookingData.prop + ')');
+  const body = encodeURIComponent(
+    'Dear ' + bookingData.name + ',\n\n' +
+    'Your booking has been confirmed. Here are your details:\n\n' +
+    'Property: ' + bookingData.prop + '\n' +
+    'Check-in: ' + bookingData.checkin + '\n' +
+    'Check-out: ' + bookingData.checkout + '\n' +
+    'Nights: ' + bookingData.nights + '\n' +
+    'Total paid: ₦' + bookingData.total.toLocaleString() + '\n' +
+    'Payment reference: ' + reference + '\n\n' +
+    'If you have any questions, reply to this email or WhatsApp us at ' + OWNER_WA() + '.\n\n' +
+    'Welcome to ' + BUSINESS() + '!\n' +
+    'The ' + BUSINESS() + ' Team'
+  );
+
+  const mailtoLink = 'mailto:' + bookingData.email +
+    '?subject=' + subject +
+    '&body=' + body;
+
+  window.open(mailtoLink, '_blank');
+  console.log('Fallback: Opening email client for manual send');
+}
+
+// ── MARK PROPERTY BOOKED ──
+function markPropertyBooked(propName) {
+  try {
+    let savedProps = JSON.parse(localStorage.getItem('ls_properties') || '[]');
+    const found = savedProps.find(p => p.name === propName);
+    if (found) {
+      found.status = 'booked';
+    } else {
+      savedProps.push({ id: Date.now(), name: propName, status: 'booked' });
+    }
+    localStorage.setItem('ls_properties', JSON.stringify(savedProps));
+    // Refresh in-memory list and re-render cards live
+    loadSiteProperties();
+    renderPropertyCards(); initCarousels();
+    checkAvailability();
+  } catch(e) {}
+}
+
+// ── BANK TRANSFER / USSD ──
+function confirmTransfer() {
+  if (!bookingData.name) { backToStep1(); return; }
+  saveBookingToStorage('pending');
+
+  const adminMsg = encodeURIComponent(
+    '🏦 *Bank Transfer / USSD Booking — ' + BUSINESS() + '*\n\n' +
+    '*Ref:* ' + bookingData.ref + '\n' +
+    '*Property:* ' + bookingData.prop + '\n' +
+    '*Guest:* ' + bookingData.name + '\n' +
+    '*Email:* ' + bookingData.email + '\n' +
+    '*Phone:* ' + (bookingData.phone || '—') + '\n' +
+    '*Check-in:* ' + bookingData.checkin + '\n' +
+    '*Check-out:* ' + bookingData.checkout + '\n' +
+    '*Amount:* ₦' + bookingData.total.toLocaleString() + '\n' +
+    '\nPlease verify transfer and confirm booking.'
+  );
+
+  document.getElementById('confirmDetails').innerHTML =
+    '<div style="font-size:13px;color:#1a5c35;display:flex;flex-direction:column;gap:5px">' +
+    '<strong>Transfer details submitted</strong>' +
+    '<span>' + bookingData.prop + '</span>' +
+    '<span>' + bookingData.checkin + ' → ' + bookingData.checkout + '</span>' +
+    '<span>Reference: ' + bookingData.ref + '</span>' +
+    '<span style="font-size:12px;color:#4CAF7D;margin-top:2px">📧 We\'ll email confirmation to <strong>' + bookingData.email + '</strong> once verified.</span>' +
+    '</div>';
+
+  const waLink = 'https://wa.me/' + OWNER_WA() + '?text=' + adminMsg;
+  document.getElementById('waConfirmLink').href = waLink;
+  document.getElementById('waConfirmLink').textContent = 'Notify us on WhatsApp →';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step3').style.display = 'block';
+  setTimeout(function() { window.open(waLink, '_blank'); }, 800);
+}
+
+// ── HELPERS ──
+function saveBookingToStorage(status) {
+  try {
+    const existing = JSON.parse(localStorage.getItem('ls_bookings') || '[]');
+    const initials = bookingData.name.trim().split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+    existing.unshift({
+      id: Date.now(), guest: bookingData.name, initials,
+      origin: bookingData.phone || bookingData.email || 'Direct website',
+      email: bookingData.email,
+      prop: bookingData.prop, checkin: bookingData.checkin, checkout: bookingData.checkout,
+      nights: bookingData.nights, amount: bookingData.total, status,
+      notes: bookingData.notes, payRef: bookingData.payRef || bookingData.ref,
+      ts: new Date().toISOString()
+    });
+    localStorage.setItem('ls_bookings', JSON.stringify(existing));
+  } catch(e) {}
+}
+
+function showPayError(msg) {
+  const el = document.getElementById('payErrorMsg');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function copyAcct() {
+  const num = window._ACCT_NUMBER || '0123456789';
+  navigator.clipboard.writeText(num).then(function(){
+    alert('Account number copied!');
+  }).catch(function(){
+    prompt('Copy this account number:', num);
+  });
+}
+
+// ── DATE CONFLICT CHECK ──
+function checkDateConflict(prop, checkin, checkout) {
+  try {
+    const existingBookings = JSON.parse(localStorage.getItem('ls_bookings') || '[]');
+    const confirmedBookings = existingBookings.filter(b => b.status === 'confirmed' && b.prop === prop);
+    
+    const newCheckin = new Date(checkin);
+    const newCheckout = new Date(checkout);
+    
+    for (const booking of confirmedBookings) {
+      const existingCheckin = new Date(booking.checkin);
+      const existingCheckout = new Date(booking.checkout);
+      
+      // Check for overlap: new period overlaps with existing if 
+      // new_checkin < existing_checkout AND new_checkout > existing_checkin
+      if (newCheckin < existingCheckout && newCheckout > existingCheckin) {
+        return true; // Conflict found
+      }
+    }
+  } catch(e) {
+    console.warn('Date conflict check error:', e);
+  }
+  return false; // No conflict
+}
+
+// Set min dates to today
+(function(){
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('fCheckin').min  = today;
+  document.getElementById('fCheckout').min = today;
+})();
+</script>
+
+<!-- Property Details Modal -->
+<div class="modal-overlay" id="propertyModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closePropertyModal()">×</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
 
 </body>
 </html>
