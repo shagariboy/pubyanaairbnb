@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lekki Stays — Property Manager Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0F0F0E;
+  --sidebar: #161614;
+  --surface: #1C1C19;
+  --surface2: #232320;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #F0EDE6;
+  --muted: #8A8680;
+  --faint: #4A4844;
+  --amber: #C98A3A;
+  --amber-light: #E8A94E;
+  --amber-dim: rgba(201,138,58,0.12);
+  --green: #4CAF7D;
+  --green-dim: rgba(76,175,125,0.12);
+  --red: #E05C5C;
+  --red-dim: rgba(224,92,92,0.12);
+  --blue: #5B9BD5;
+  --blue-dim: rgba(91,155,213,0.12);
+  --cream: #F7F4EE;
+  --sidebar-w: 220px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;overflow-x:hidden}
+button{font-family:'DM Sans',sans-serif;cursor:pointer}
+input,select,textarea{font-family:'DM Sans',sans-serif}
+
+/* ── LAYOUT ── */
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:var(--sidebar);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;
+  transition:transform .3s;z-index:200;
+}
+.sidebar-head{
+  padding:24px 20px 20px;
+  border-bottom:1px solid var(--border);
+}
+.brand{
+  font-family:'Syne',sans-serif;font-size:16px;font-weight:600;
+  color:var(--text);letter-spacing:.02em;
+}
+.brand span{color:var(--amber)}
+.brand-sub{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:.04em;text-transform:uppercase}
+
+.nav-section{padding:16px 12px 8px}
+.nav-label{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:0 8px;margin-bottom:6px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:6px;
+  font-size:13px;color:var(--muted);
+  cursor:pointer;transition:all .15s;
+  border:none;background:none;width:100%;text-align:left;
+}
+.nav-item:hover{background:var(--surface);color:var(--text)}
+.nav-item.active{background:var(--amber-dim);color:var(--amber)}
+.nav-item svg{flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.nav-badge{
+  margin-left:auto;background:var(--amber);color:var(--bg);
+  font-size:10px;font-weight:600;padding:2px 6px;border-radius:20px;
+}
+
+.sidebar-foot{
+  margin-top:auto;padding:16px 12px;border-top:1px solid var(--border);
+}
+.host-row{display:flex;align-items:center;gap:10px}
+.host-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--amber-dim);border:1px solid var(--amber);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:600;color:var(--amber);flex-shrink:0;
+}
+.host-name{font-size:13px;font-weight:500;color:var(--text)}
+.host-role{font-size:11px;color:var(--muted)}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+.topbar{
+  height:56px;flex-shrink:0;
+  background:var(--sidebar);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;gap:16px;
+}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.menu-btn{
+  display:none;background:none;border:none;color:var(--muted);
+  padding:6px;border-radius:4px;cursor:pointer;
+}
+.menu-btn:hover{color:var(--text)}
+.sidebar-close-btn{
+  display:none;background:none;border:none;color:var(--muted);
+  padding:4px;border-radius:4px;cursor:pointer;flex-shrink:0;
+}
+.sidebar-close-btn:hover{color:var(--text)}
+.page-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-btn{
+  background:none;border:1px solid var(--border2);color:var(--muted);
+  padding:7px 14px;border-radius:6px;font-size:12px;font-weight:500;
+  display:flex;align-items:center;gap:6px;transition:all .15s;
+}
+.topbar-btn:hover{border-color:var(--amber);color:var(--amber)}
+.topbar-btn.primary{background:var(--amber);border-color:var(--amber);color:var(--bg);font-weight:600}
+.topbar-btn.primary:hover{background:var(--amber-light);border-color:var(--amber-light)}
+
+.content{flex:1;overflow-y:auto;padding:28px}
+
+/* ── PANELS (views) ── */
+.panel{display:none}
+.panel.active{display:block}
+
+/* ── STATS ROW ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:18px 20px;
+}
+.stat-label{font-size:11px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+.stat-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:600;color:var(--text);line-height:1}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:4px}
+.stat-up{color:var(--green)}
+.stat-down{color:var(--red)}
+
+/* ── SECTION HEADER ── */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:600;color:var(--text)}
+.sec-action{
+  background:none;border:1px solid var(--border2);color:var(--muted);
+  padding:6px 12px;border-radius:6px;font-size:12px;
+  display:flex;align-items:center;gap:5px;transition:all .15s;
+}
+.sec-action:hover{color:var(--amber);border-color:var(--amber)}
+
+/* ── PROPERTIES TABLE ── */
+.prop-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.prop-table{width:100%;border-collapse:collapse}
+.prop-table th{
+  font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--faint);padding:12px 16px;text-align:left;
+  border-bottom:1px solid var(--border);background:var(--surface2);
+}
+.prop-table td{padding:14px 16px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:13px}
+.prop-table tr:last-child td{border-bottom:none}
+.prop-table tr:hover td{background:var(--surface2)}
+.prop-thumb{
+  width:44px;height:36px;border-radius:5px;object-fit:cover;
+  background:var(--surface2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:var(--faint);flex-shrink:0;
+}
+.prop-info{display:flex;align-items:center;gap:12px}
+.prop-name-cell{font-weight:500;color:var(--text);margin-bottom:2px;white-space:nowrap}
+.prop-loc-cell{font-size:11px;color:var(--muted)}
+.status-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;
+}
+.status-pill.available{background:var(--green-dim);color:var(--green)}
+.status-pill.booked{background:var(--amber-dim);color:var(--amber)}
+.status-pill.maintenance{background:var(--red-dim);color:var(--red)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.action-btns{display:flex;gap:6px}
+.act-btn{
+  background:none;border:1px solid var(--border);color:var(--muted);
+  padding:5px 10px;border-radius:5px;font-size:11px;font-weight:500;
+  transition:all .15s;white-space:nowrap;
+}
+.act-btn:hover{border-color:var(--amber);color:var(--amber)}
+.act-btn.danger:hover{border-color:var(--red);color:var(--red)}
+
+/* ── BOOKINGS ── */
+.booking-list{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.booking-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:16px 20px;
+  display:flex;align-items:center;gap:16px;
+}
+.booking-card:hover{border-color:var(--border2)}
+.booking-avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--blue-dim);border:1px solid var(--blue);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:600;color:var(--blue);flex-shrink:0;
+}
+.booking-info{flex:1;min-width:0}
+.booking-guest{font-weight:500;color:var(--text);font-size:13px}
+.booking-detail{font-size:12px;color:var(--muted);margin-top:2px}
+.booking-meta{text-align:right;flex-shrink:0}
+.booking-amount{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;color:var(--text)}
+.booking-nights{font-size:11px;color:var(--muted);margin-top:2px}
+.booking-status{margin-top:6px}
+
+/* ── ADD PROPERTY FORM ── */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px;margin-bottom:20px}
+.form-section-title{
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:600;
+  color:var(--amber);letter-spacing:.04em;text-transform:uppercase;
+  margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border);
+}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr}
+.form-grid.full{grid-template-columns:1fr}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.form-input{
+  background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);border-radius:6px;padding:10px 12px;font-size:13px;
+  outline:none;transition:border-color .15s;
+}
+.form-input:focus{border-color:var(--amber)}
+.form-input::placeholder{color:var(--faint)}
+/* Required field error state */
+.form-input[style*="borderColor: red"] { 
+  border-color: var(--red) !important; 
+  background-color: rgba(224, 92, 92, 0.08) !important;
+}
+.form-textarea{resize:vertical;min-height:80px}
+select.form-input option{background:var(--surface2)}
+.amenity-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.amenity-check{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--muted)}
+.amenity-check input[type=checkbox]{
+  width:15px;height:15px;accent-color:var(--amber);cursor:pointer;
+}
+.amenity-check:hover{color:var(--text)}
+.upload-zone{
+  border:1px dashed var(--border2);border-radius:6px;
+  padding:32px;text-align:center;cursor:pointer;
+  transition:border-color .15s;background:var(--surface2);
+}
+.upload-zone:hover{border-color:var(--amber)}
+.upload-icon{font-size:28px;margin-bottom:8px;opacity:.4}
+.upload-text{font-size:13px;color:var(--muted)}
+.upload-sub{font-size:11px;color:var(--faint);margin-top:4px}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.btn-cancel{
+  background:none;border:1px solid var(--border2);color:var(--muted);
+  padding:10px 20px;border-radius:6px;font-size:13px;font-weight:500;
+  transition:all .15s;
+}
+.btn-cancel:hover{border-color:var(--border2);color:var(--text)}
+.btn-save{
+  background:var(--amber);border:none;color:var(--bg);
+  padding:10px 24px;border-radius:6px;font-size:13px;font-weight:600;
+  transition:background .15s;
+}
+.btn-save:hover{background:var(--amber-light)}
+
+/* ── EARNINGS ── */
+.earnings-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px}
+.chart-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.chart-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:120px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+.bar{
+  width:100%;border-radius:3px 3px 0 0;
+  background:var(--surface2);transition:background .2s;min-height:4px;
+}
+.bar.current{background:var(--amber)}
+.bar-wrap:hover .bar{background:var(--amber-light)}
+.bar-label{font-size:9px;color:var(--faint);text-align:center}
+.platform-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px}
+.platform-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.platform-row:last-child{border-bottom:none}
+.platform-name{font-size:13px;color:var(--text);font-weight:500}
+.platform-pct{font-size:12px;color:var(--muted)}
+.platform-bar-track{height:4px;background:var(--surface2);border-radius:2px;margin-top:6px;width:100%}
+.platform-bar-fill{height:4px;border-radius:2px;background:var(--amber)}
+
+/* ── SETTINGS ── */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* ── MODAL ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.7);z-index:500;
+  align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:12px;padding:28px;width:100%;max-width:420px;
+}
+.modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+
+/* ── EMPTY STATE ── */
+.empty{
+  padding:60px 20px;text-align:center;
+}
+.empty-icon{font-size:40px;opacity:.2;margin-bottom:12px}
+.empty-title{font-size:15px;font-weight:500;color:var(--muted);margin-bottom:6px}
+.empty-sub{font-size:13px;color:var(--faint)}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:999;
+  background:var(--green);color:#fff;
+  padding:12px 18px;border-radius:8px;font-size:13px;font-weight:500;
+  display:none;align-items:center;gap:8px;
+  animation:slideup .25s ease;
+}
+.toast.show{display:flex}
+@keyframes slideup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── MOBILE OVERLAY ── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:190}
+
+/* ── RESPONSIVE ── */
+.pay-gateways-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.how-it-works-grid{grid-template-columns:repeat(4,1fr)}
+.chart-bars{overflow:hidden}
+
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .earnings-grid{grid-template-columns:1fr}
+  .settings-grid{grid-template-columns:1fr}
+  .form-grid.three{grid-template-columns:1fr 1fr}
+  .amenity-grid{grid-template-columns:repeat(3,1fr)}
+}
+
+@media(max-width:680px){
+  /* Sidebar: slide in from left on mobile */
+  .sidebar{
+    position:fixed;top:0;left:0;height:100%;
+    transform:translateX(-100%);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.open{display:block}
+  .menu-btn{display:flex;align-items:center;justify-content:center}
+  .sidebar-close-btn{display:flex;align-items:center;justify-content:center}
+  .main{width:100%;min-width:0}
+  .topbar{padding:0 16px}
+  .content{padding:16px;overflow-x:hidden}
+  .stats-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .stat-val{font-size:20px}
+  .form-grid{grid-template-columns:1fr}
+  .form-grid.three{grid-template-columns:1fr}
+  .amenity-grid{grid-template-columns:repeat(2,1fr)}
+  .booking-card{flex-wrap:wrap}
+  .booking-meta{text-align:left;width:100%}
+  .prop-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .prop-table{min-width:560px}
+  .topbar-right .topbar-btn:not(.primary){display:none}
+  .chart-bars{height:100px}
+  .bar-label{font-size:10px}
+  .earnings-grid{display:flex;flex-direction:column;gap:24px}
+  .pay-gateways-grid{grid-template-columns:1fr}
+  .how-it-works-grid{grid-template-columns:1fr 1fr}
+  .content [style*="grid-template-columns:1fr 1fr"]{display:block!important}
+  .content [style*="grid-template-columns:1fr 1fr"] > *{margin-bottom:16px}
+  .content [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:1fr 1fr!important;display:grid!important}
+  .modal{padding:20px 16px}
+  .modal > div[style*="grid-template-columns:1fr 1fr"]{display:block!important}
+  .modal > div[style*="grid-template-columns:1fr 1fr"] .form-group{margin-bottom:12px}
+  .modal > div[style*="grid-template-columns:1fr 1fr 1fr"]{display:block!important}
+  .modal > div[style*="grid-template-columns:1fr 1fr 1fr"] .form-group{margin-bottom:12px}
+  .form-actions{flex-direction:column}
+  .form-actions button,.form-actions a{width:100%;text-align:center;justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-head">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div class="brand">Lekki <span>Stays</span></div>
+        <div class="brand-sub">Property Manager</div>
+      </div>
+      <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close menu">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <button class="nav-item active" onclick="switchPanel('dashboard',this)">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="switchPanel('properties',this)">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Properties
+      <span class="nav-badge" id="propsBadge">0</span>
+    </button>
+    <button class="nav-item" onclick="switchPanel('bookings',this)">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Bookings
+      <span class="nav-badge">2</span>
+    </button>
+    <button class="nav-item" onclick="switchPanel('earnings',this)">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      Earnings
+    </button>
+    <button class="nav-item" onclick="switchPanel('alerts',this)" id="navAlerts">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+      Alerts
+      <span class="nav-badge" id="alertBadge" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="switchPanel('payments',this)">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Payments
+    </button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Manage</div>
+    <button class="nav-item" onclick="switchPanel('add',this)">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Add property
+    </button>
+    <button class="nav-item" onclick="switchPanel('settings',this)">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </button>
+  </div>
+
+  <div class="sidebar-foot">
+    <div class="host-row">
+      <div class="host-avatar">AO</div>
+      <div>
+        <div class="host-name">Adaora Okafor</div>
+        <div class="host-role">Property Manager</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-btn" onclick="toggleSidebar()">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="page-title" id="pageTitle">Dashboard</span>
+    </div>
+    <div class="topbar-right">
+      <button class="topbar-btn" id="topbarAlertBtn" onclick="switchPanel('alerts', document.getElementById('navAlerts'))" style="position:relative">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        Alerts
+        <span id="topbarAlertBadge" style="display:none;position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center;line-height:1;padding:0 3px">0</span>
+      </button>
+      <button class="topbar-btn primary" onclick="switchPanel('add', document.querySelector('[onclick*=\'add\']'))">
+        + Add listing
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">This month</div>
+          <div class="stat-val" id="dashboard-earn-month">—</div>
+          <div class="stat-sub">Current month revenue</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Occupancy rate</div>
+          <div class="stat-val" id="dashboard-occupancy-rate">—</div>
+          <div class="stat-sub">Booked vs total properties</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active properties</div>
+          <div class="stat-val" id="activeProps">0</div>
+          <div class="stat-sub" id="activePropsSub">Properties with bookings</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending bookings</div>
+          <div class="stat-val" id="dashboard-pending-bookings">0</div>
+          <div class="stat-sub"><span class="stat-down">Needs action</span></div>
+        </div>
+      </div>
+
+      <div class="sec-head">
+        <div class="sec-title">Your properties</div>
+        <button class="sec-action" onclick="switchPanel('properties', document.querySelector('[onclick*=properties]'))">View all →</button>
+      </div>
+      <div class="prop-table-wrap" style="margin-bottom:24px">
+        <table class="prop-table">
+          <thead><tr>
+            <th>Property</th><th>Location</th><th>Rate/night</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="propTableBody">
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sec-head">
+        <div class="sec-title">Recent bookings</div>
+        <button class="sec-action" onclick="switchPanel('bookings', document.querySelector('[onclick*=bookings]'))">View all →</button>
+      </div>
+      <div id="dashBookings"></div>
+    </div>
+
+    <!-- ── PROPERTIES ── -->
+    <div class="panel" id="panel-properties">
+      <div class="sec-head" style="margin-bottom:16px">
+        <div class="sec-title">All properties</div>
+        <button class="topbar-btn primary" onclick="switchPanel('add', document.querySelector('[onclick*=\'add\']'))" style="padding:7px 14px;font-size:12px">+ Add new</button>
+      </div>
+      <div class="prop-table-wrap">
+        <table class="prop-table">
+          <thead><tr>
+            <th>Property</th><th>Location</th><th>Rate/night</th><th>Beds</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="propTableBody2"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── BOOKINGS ── -->
+    <div class="panel" id="panel-bookings">
+      <div class="sec-head" style="margin-bottom:16px">
+        <div class="sec-title">All bookings</div>
+        <div style="display:flex;gap:8px">
+          <select class="form-input" style="padding:7px 12px;font-size:12px;width:auto" onchange="filterBookings(this.value)">
+            <option value="all">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="completed">Completed</option>
+          </select>
+          <button class="sec-action" onclick="clearAllBookings()" style="font-size:12px">Clear All Bookings</button>
+        </div>
+      </div>
+      <div class="booking-list" id="bookingList"></div>
+    </div>
+
+    <!-- ── EARNINGS ── -->
+    <div class="panel" id="panel-earnings">
+      <div class="stats-grid" style="margin-bottom:20px">
+        <div class="stat-card">
+          <div class="stat-label">Earnings this month</div>
+          <div class="stat-val" id="earn-month">—</div>
+          <div class="stat-sub" id="earn-month-sub">Current month revenue</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active properties</div>
+          <div class="stat-val" id="active-properties">—</div>
+          <div class="stat-sub" id="active-properties-sub">Properties with bookings</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Occupancy rate</div>
+          <div class="stat-val" id="occupancy-rate">—</div>
+          <div class="stat-sub" id="occupancy-rate-sub">Booked vs available</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending bookings</div>
+          <div class="stat-val" id="pending-bookings">—</div>
+          <div class="stat-sub" id="pending-bookings-sub">Awaiting verification</div>
+        </div>
+      </div>
+      <div class="earnings-grid">
+        <div class="chart-card">
+          <div class="chart-title" id="chartTitle">Monthly revenue</div>
+          <div class="chart-sub">₦ — confirmed bookings only</div>
+          <div class="chart-bars" id="chartBars"></div>
+          <div id="chartLegend" style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap"></div>
+        </div>
+        <div class="platform-card">
+          <div class="chart-title" style="margin-bottom:16px">Booking source</div>
+          <div class="platform-row">
+            <div>
+              <div class="platform-name">Direct (your site)</div>
+              <div class="platform-pct">62% of bookings</div>
+              <div class="platform-bar-track"><div class="platform-bar-fill" style="width:62%"></div></div>
+            </div>
+          </div>
+          <div class="platform-row">
+            <div>
+              <div class="platform-name">Airbnb</div>
+              <div class="platform-pct">28% of bookings</div>
+              <div class="platform-bar-track"><div class="platform-bar-fill" style="width:28%;background:var(--blue)"></div></div>
+            </div>
+          </div>
+          <div class="platform-row">
+            <div>
+              <div class="platform-name">Shortlet.ng</div>
+              <div class="platform-pct">10% of bookings</div>
+              <div class="platform-bar-track"><div class="platform-bar-fill" style="width:10%;background:var(--muted)"></div></div>
+            </div>
+          </div>
+          <div style="margin-top:16px;padding:12px;background:var(--green-dim);border-radius:6px;font-size:12px;color:var(--green)">
+            Direct bookings saved you ₦426,000 in platform fees this year.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ADD PROPERTY ── -->
+    <div class="panel" id="panel-add">
+      <div class="form-card">
+        <div class="form-section-title">Property details</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Property name</label>
+            <input class="form-input" type="text" placeholder="e.g. The Eko Suite" id="newName"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Property type</label>
+            <select class="form-input" id="newType">
+              <option value="">Select type</option>
+              <option>Studio apartment</option>
+              <option>1-bedroom flat</option>
+              <option>2-bedroom flat</option>
+              <option>3-bedroom flat</option>
+              <option>Penthouse</option>
+              <option>Duplex</option>
+              <option>Terrace house</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid three">
+          <div class="form-group">
+            <label class="form-label">Zone / Area</label>
+            <select class="form-input" id="newZone">
+              <option value="">Select zone</option>
+              <option>Victoria Island</option>
+              <option>Ikoyi</option>
+              <option>Lekki Phase 1</option>
+              <option>Lekki Phase 2</option>
+              <option>Ajah</option>
+              <option>Ikeja</option>
+              <option>Yaba</option>
+              <option>Mainland</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Full address</label>
+            <input class="form-input" type="text" placeholder="Street address" id="newAddress"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Landmark (optional)</label>
+            <input class="form-input" type="text" placeholder="Near Landmark Centre"/>
+          </div>
+        </div>
+        <div class="form-grid full">
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-input form-textarea" placeholder="Describe the property — space, vibe, what makes it special..." id="newDesc"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">Pricing & availability</div>
+        <div class="form-grid three">
+          <div class="form-group">
+            <label class="form-label">Rate per night (₦)</label>
+            <input class="form-input" type="number" placeholder="e.g. 85000" id="newRate"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dec surge rate (₦)</label>
+            <input class="form-input" type="number" placeholder="e.g. 140000" id="newSurge"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Min. stay (nights)</label>
+            <input class="form-input" type="number" placeholder="1" id="newMin" value="1"/>
+          </div>
+        </div>
+        <div class="form-grid three">
+          <div class="form-group">
+            <label class="form-label">Bedrooms</label>
+            <select class="form-input" id="newBeds">
+              <option>Studio</option><option>1</option><option>2</option>
+              <option>3</option><option>4</option><option>5+</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bathrooms</label>
+            <select class="form-input" id="newBaths">
+              <option>1</option><option>2</option><option>3</option><option>4+</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max guests</label>
+            <input class="form-input" type="number" placeholder="4" id="newGuests" value="2"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">Amenities</div>
+        <div class="amenity-grid" id="amenityGrid">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">Photos</div>
+        <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="handlePhotoUpload(event)"/>
+        <div class="upload-zone" onclick="document.getElementById('photoInput').click()" id="uploadZone">
+          <div class="upload-icon">📸</div>
+          <div class="upload-text">Click to upload property photos</div>
+          <div class="upload-sub">JPG, PNG or WEBP · Max 10MB each · Up to 20 photos</div>
+        </div>
+        <div id="photoPreviewGrid" style="display:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:14px"></div>
+        <div id="photoCount" style="font-size:11px;color:var(--muted);margin-top:8px;display:none"></div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">WhatsApp booking</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">WhatsApp number</label>
+            <input class="form-input" type="tel" placeholder="+234 800 000 0000" id="newWA"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Booking message template</label>
+            <input class="form-input" type="text" placeholder="Hi, I'd like to book [property] for [dates]..." id="newMsg"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-cancel" onclick="switchPanel('properties', document.querySelector('[onclick*=properties]'))">Cancel</button>
+        <button class="btn-save" onclick="saveProperty()">Save & publish listing</button>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="panel" id="panel-settings">
+      <div class="settings-grid">
+        <!-- ACCOUNT -->
+        <div class="form-card">
+          <div class="form-section-title">Account details</div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Full name</label>
+            <input class="form-input" type="text" id="sFullName" placeholder="Your name"/>
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Email</label>
+            <input class="form-input" type="email" id="sEmail" placeholder="admin@yourdomain.com"/>
+          </div>
+          <div class="form-group" style="margin-bottom:20px">
+            <label class="form-label">WhatsApp (primary)</label>
+            <input class="form-input" type="tel" id="sWhatsApp" placeholder="+234 800 000 0000"/>
+          </div>
+          <button class="btn-save" onclick="saveSettingsSection('account')">Save changes</button>
+        </div>
+        <!-- BOOKING PREFS -->
+        <div class="form-card">
+          <div class="form-section-title">Booking preferences</div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Default cancellation policy</label>
+            <select class="form-input" id="sCancelPolicy">
+              <option>48-hour free cancellation</option>
+              <option>72-hour free cancellation</option>
+              <option>Non-refundable</option>
+              <option>Flexible (full refund)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Payment methods accepted</label>
+            <select class="form-input" id="sPaymentMethod">
+              <option>Paystack (card + transfer)</option>
+              <option>Flutterwave</option>
+              <option>Manual bank transfer</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">December surge period</label>
+            <input class="form-input" type="text" id="sSurgePeriod" placeholder="Nov 15 – Jan 5"/>
+          </div>
+          <div class="form-section-title" style="margin-top:20px">Bank transfer details</div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Bank name</label>
+            <input class="form-input" type="text" id="sBankName" placeholder="e.g. Guaranty Trust Bank (GTB)"/>
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Account name</label>
+            <input class="form-input" type="text" id="sAcctName" placeholder="e.g. Lekki Stays Ltd"/>
+          </div>
+          <div class="form-group" style="margin-bottom:20px">
+            <label class="form-label">Account number</label>
+            <input class="form-input" type="text" id="sAcctNumber" placeholder="e.g. 0123456789"/>
+          </div>
+          <button class="btn-save" onclick="saveSettingsSection('prefs')">Save preferences</button>
+        </div>
+        <!-- SITE & BRANDING -->
+        <div class="form-card">
+          <div class="form-section-title">Site & branding</div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Business name</label>
+            <input class="form-input" type="text" id="sBusinessName" placeholder="Lekki Stays"/>
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Custom domain</label>
+            <input class="form-input" type="text" id="sDomain" placeholder="lekkistays.com"/>
+          </div>
+          <div class="form-group" style="margin-bottom:20px">
+            <label class="form-label">Google Analytics ID</label>
+            <input class="form-input" type="text" id="sGAID" placeholder="G-XXXXXXXXXX"/>
+          </div>
+          <button class="btn-save" onclick="saveSettingsSection('branding')">Save settings</button>
+        </div>
+        <!-- NOTIFICATIONS -->
+        <div class="form-card">
+          <div class="form-section-title">Notifications</div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--text)">New booking requests</div>
+                <div style="font-size:12px;color:var(--muted)">WhatsApp + email</div>
+              </div>
+              <input type="checkbox" id="nBookings" style="width:18px;height:18px;accent-color:var(--amber)"/>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--text)">Guest check-in reminders</div>
+                <div style="font-size:12px;color:var(--muted)">24hr before arrival</div>
+              </div>
+              <input type="checkbox" id="nCheckin" style="width:18px;height:18px;accent-color:var(--amber)"/>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--text)">Monthly earnings report</div>
+                <div style="font-size:12px;color:var(--muted)">Email on 1st of each month</div>
+              </div>
+              <input type="checkbox" id="nEarnings" style="width:18px;height:18px;accent-color:var(--amber)"/>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--text)">Cleaning crew alerts</div>
+                <div style="font-size:12px;color:var(--muted)">After each checkout</div>
+              </div>
+              <input type="checkbox" id="nCleaning" style="width:18px;height:18px;accent-color:var(--amber)"/>
+            </div>
+          </div>
+          <button class="btn-save" style="margin-top:20px" onclick="saveSettingsSection('notifications')">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ALERTS ── -->
+    <div class="panel" id="panel-alerts">
+      <div class="sec-head" style="margin-bottom:16px">
+        <div class="sec-title">Alerts & Notifications</div>
+        <button class="sec-action" onclick="clearAllAlerts()">Mark all read</button>
+      </div>
+      <div id="alertsList"></div>
+    </div>
+
+    <!-- ── PAYMENTS ── -->
+    <div class="panel" id="panel-payments">
+      <div class="stats-grid" style="margin-bottom:20px">
+        <div class="stat-card">
+          <div class="stat-label">Payments received</div>
+          <div class="stat-val" id="payTotal">₦0</div>
+          <div class="stat-sub">From confirmed bookings</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending payouts</div>
+          <div class="stat-val" style="color:var(--amber)">₦0</div>
+          <div class="stat-sub">Awaiting settlement</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Payment gateway</div>
+          <div class="stat-val" style="font-size:16px;color:var(--green)">Paystack</div>
+          <div class="stat-sub">Ready to connect</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Success rate</div>
+          <div class="stat-val">—</div>
+          <div class="stat-sub">Connect gateway first</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" class="pay-gateways-grid">
+        <!-- Paystack setup -->
+        <div class="form-card">
+          <div class="form-section-title">🔗 Connect Paystack</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7">Paystack is the most popular payment gateway in Nigeria. Accept cards, bank transfers, and USSD from your guests directly.</p>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">Paystack Public Key</label>
+            <input class="form-input" type="text" id="paystackPubKey" placeholder="pk_live_xxxxxxxxxxxxxxxxxxxxxxxx"/>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">Paystack Secret Key</label>
+            <input class="form-input" type="password" id="paystackSecKey" placeholder="sk_live_xxxxxxxxxxxxxxxxxxxxxxxx"/>
+          </div>
+          <div style="background:var(--amber-dim);border:1px solid rgba(201,138,58,0.25);border-radius:6px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--amber)">
+            ⚠️ Never share your Secret Key. In production, only use it server-side. For this demo, keys are saved locally only.
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-save" onclick="savePaystackKeys()">Save & test connection</button>
+            <a href="https://dashboard.paystack.com/#/signup" target="_blank" class="btn-cancel" style="display:inline-flex;align-items:center;text-decoration:none;padding:10px 16px">Create account →</a>
+          </div>
+          <div id="paystackStatus" style="margin-top:12px;font-size:12px;color:var(--muted)"></div>
+        </div>
+
+        <!-- Flutterwave setup -->
+        <div class="form-card">
+          <div class="form-section-title">🔗 Connect Flutterwave</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7">Flutterwave supports payments from 34+ African countries including mobile money — great for international diaspora guests.</p>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">Flutterwave Public Key</label>
+            <input class="form-input" type="text" id="flwPubKey" placeholder="FLWPUBK_TEST-xxxxxxxxxxxxxxxxxxxxxxxx"/>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">Flutterwave Secret Key</label>
+            <input class="form-input" type="password" id="flwSecKey" placeholder="FLWSECK_TEST-xxxxxxxxxxxxxxxxxxxxxxxx"/>
+          </div>
+          <div style="background:var(--blue-dim);border:1px solid rgba(91,155,213,0.2);border-radius:6px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--blue)">
+            💡 Use test keys during development. Switch to live keys when you're ready to go live.
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-save" style="background:var(--blue);border-color:var(--blue)" onclick="saveFlwKeys()">Save & test connection</button>
+            <a href="https://app.flutterwave.com/register" target="_blank" class="btn-cancel" style="display:inline-flex;align-items:center;text-decoration:none;padding:10px 16px">Create account →</a>
+          </div>
+          <div id="flwStatus" style="margin-top:12px;font-size:12px;color:var(--muted)"></div>
+        </div>
+
+        <!-- EmailJS Email Setup -->
+        <div class="form-card">
+          <div class="form-section-title">📧 Email Delivery (EmailJS)</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7"><strong>Send real confirmation emails to guests</strong> automatically after booking. FREE tier: 200 emails/month. Takes 2 minutes to set up.</p>
+          
+          <div style="background:var(--green-dim);border:1px solid rgba(76,175,125,0.25);border-radius:6px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--green)">
+            ✅ Step 1: <a href="https://dashboard.emailjs.com" target="_blank" style="color:var(--green);font-weight:600;text-decoration:underline">Create FREE EmailJS account</a>
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">EmailJS Public Key</label>
+            <input class="form-input" type="text" id="emailjsPublic" placeholder="YOUR_PUBLIC_KEY_from_dashboard"/>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">EmailJS Service ID</label>
+            <input class="form-input" type="text" id="emailjsService" placeholder="service_xxxxxx"/>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">Guest Confirmation Template ID</label>
+            <input class="form-input" type="text" id="emailjsTemplateGuest" placeholder="template_guest_xxxxxx"/>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">Admin Notification Template ID</label>
+            <input class="form-input" type="text" id="emailjsTemplateAdmin" placeholder="template_admin_xxxxxx"/>
+          </div>
+
+          <div style="background:var(--blue-dim);border:1px solid rgba(91,155,213,0.2);border-radius:6px;padding:12px;margin-bottom:16px;font-size:11px;color:var(--blue);line-height:1.6">
+            <strong>Need help?</strong> Watch this quick video to get your IDs: <a href="https://youtu.be/_r8OKAwfWQE" target="_blank" style="color:var(--blue);text-decoration:underline">EmailJS Setup Guide</a><br/>
+            Keys are stored locally only. No sensitive data is exposed.
+          </div>
+
+          <button class="btn-save" onclick="saveEmailJSKeys()">Save email configuration</button>
+          <div id="emailjsStatus" style="margin-top:12px;font-size:12px;color:var(--muted)"></div>
+        </div>
+      </div>
+
+      <!-- How it works -->
+      <div class="form-card">
+        <div class="form-section-title">How payment integration works</div>
+        <div style="display:grid;gap:14px" class="how-it-works-grid">
+          <div style="text-align:center;padding:16px 10px">
+            <div style="font-size:28px;margin-bottom:8px">1️⃣</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">Guest books</div>
+            <div style="font-size:11px;color:var(--muted)">Guest fills the booking form on your site</div>
+          </div>
+          <div style="text-align:center;padding:16px 10px">
+            <div style="font-size:28px;margin-bottom:8px">2️⃣</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">Payment popup</div>
+            <div style="font-size:11px;color:var(--muted)">Paystack/Flutterwave popup collects card or bank details</div>
+          </div>
+          <div style="text-align:center;padding:16px 10px">
+            <div style="font-size:28px;margin-bottom:8px">3️⃣</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">Auto confirm</div>
+            <div style="font-size:11px;color:var(--muted)">On payment success, booking is confirmed + WhatsApp sent</div>
+          </div>
+          <div style="text-align:center;padding:16px 10px">
+            <div style="font-size:28px;margin-bottom:8px">4️⃣</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">Payout</div>
+            <div style="font-size:11px;color:var(--muted)">Funds settle to your Nigerian bank account in 1–2 days</div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:16px">
+          <div style="font-size:12px;color:var(--muted)"><strong style="color:var(--text)">Next step:</strong> To enable live payments on your booking site, add your public key to <code style="background:var(--surface2);padding:2px 6px;border-radius:3px;font-size:11px">lekki-stays-demo.html</code> and call <code style="background:var(--surface2);padding:2px 6px;border-radius:3px;font-size:11px">PaystackPop.setup()</code> in the booking form submit handler. I can do this for you — just say the word.</div>
+        </div>
+      </div>
+
+      <!-- Payment log -->
+      <div class="sec-head" style="margin-bottom:12px">
+        <div class="sec-title">Payment log</div>
+      </div>
+      <div id="paymentLog">
+        <div class="empty"><div class="empty-icon">💳</div><div class="empty-title">No payments recorded yet</div><div class="empty-sub">Payments from confirmed bookings will appear here once your gateway is connected.</div></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- MODAL: Edit Property -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal" style="max-width:560px;width:100%;max-height:90vh;overflow-y:auto">
+    <div class="modal-title">Edit property</div>
+    <div class="modal-sub" id="editModalSub">Update your property details.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="form-group">
+        <label class="form-label">Property name</label>
+        <input class="form-input" type="text" id="editName"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Location / Zone</label>
+        <select class="form-input" id="editLocation">
+          <option>Victoria Island</option><option>Ikoyi</option><option>Lekki Phase 1</option>
+          <option>Lekki Phase 2</option><option>Ajah</option><option>Ikeja</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="form-group">
+        <label class="form-label">Rate/night (₦)</label>
+        <input class="form-input" type="number" id="editRate"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dec surge rate (₦)</label>
+        <input class="form-input" type="number" id="editSurge"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-input" id="editStatus">
+          <option value="available">Available</option>
+          <option value="booked">Booked</option>
+          <option value="maintenance">Maintenance</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="form-group">
+        <label class="form-label">Bedrooms</label>
+        <select class="form-input" id="editBeds">
+          <option>Studio</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5+</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bathrooms</label>
+        <select class="form-input" id="editBaths">
+          <option>1</option><option>2</option><option>3</option><option>4+</option>
+        </select>
+      </div>
+    </div>
+    <!-- AMENITIES in edit modal -->
+    <div style="margin-bottom:16px">
+      <div class="form-label" style="margin-bottom:8px">Amenities</div>
+      <div class="amenity-grid" id="editAmenityGrid" style="margin-bottom:0"></div>
+    </div>
+    <!-- PHOTOS in edit modal -->
+    <div style="margin-bottom:16px">
+      <div class="form-label" style="margin-bottom:8px">Photos</div>
+      <div id="editPhotoGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-bottom:10px"></div>
+      <input type="file" id="editPhotoInput" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="handleEditPhotoAdd(event)"/>
+      <button type="button" onclick="document.getElementById('editPhotoInput').click()" style="background:none;border:1px dashed var(--border2);color:var(--muted);padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;width:100%;transition:.15s" onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'">
+        + Add photos
+      </button>
+      <div id="editPhotoCount" style="font-size:11px;color:var(--faint);margin-top:6px"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-save" onclick="saveEditProp()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: status change -->
+<div class="modal-overlay" id="statusModal">
+  <div class="modal">
+    <div class="modal-title">Update availability</div>
+    <div class="modal-sub" id="modalSub">Change the status for this property.</div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-input" id="modalStatus">
+        <option value="available">Available</option>
+        <option value="booked">Booked</option>
+        <option value="maintenance">Maintenance</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="confirmStatus()">Update</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toastMsg">Saved</span>
+</div>
+
+<script>
+// ── DATA ──
+let properties = [
+  {id:1, name:'The Eko Suite', location:'Victoria Island', rate:85000, surge:140000, beds:2, baths:2, status:'available'},
+  {id:2, name:'Lekki Phase 1 Penthouse', location:'Lekki Phase 1', rate:120000, surge:200000, beds:3, baths:3, status:'booked'},
+  {id:3, name:'Ikoyi Garden Flat', location:'Ikoyi', rate:55000, surge:92000, beds:1, baths:1, status:'available'},
+];
+
+let bookings = [
+  // Seed bookings removed for clean demo
+];
+
+const amenities = [
+  '24hr power (gen + NEPA)','Wifi (fibre)','Air conditioning','Swimming pool',
+  'Gym access','Security / gateman','CCTV','Parking space',
+  'Smart TV / Netflix','Washing machine','Fully equipped kitchen','Backup water',
+  'Balcony','Rooftop access','Elevator','Wheelchair accessible',
+];
+
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+// Earnings now calculated live from real booking data in localStorage
+
+// ── CONFIG ──
+const PAYSTACK_SECRET_KEY = 'sk_test_d93632d7867c7222b76d5dbb0ff11030d4e0e284';
+
+let activeModal = null;
+let currentStatusPropId = null;
+let currentEditPropId = null;
+let alerts = [];
+let payments = [];
+
+// ── RENDER ──
+function fmt(n){return '₦'+n.toLocaleString()}
+
+function statusPill(s){
+  const map = {available:['Available','available'],booked:['Booked','booked'],maintenance:['Maintenance','maintenance']};
+  const [label,cls] = map[s]||['Unknown',''];
+  return `<span class="status-pill ${cls}"><span class="status-dot"></span>${label}</span>`;
+}
+
+function bookingStatusPill(s){
+  const map = {pending:'status-pill booked',confirmed:'status-pill available',completed:'status-pill maintenance'};
+  return `<span class="${map[s]||'status-pill'}"><span class="status-dot"></span>${s.charAt(0).toUpperCase()+s.slice(1)}</span>`;
+}
+
+function renderTable(tbodyId, showBeds){
+  const el = document.getElementById(tbodyId);
+  if(!el) return;
+  // Always keep properties badge in sync with actual count
+  const propsBadge = document.getElementById('propsBadge');
+  if(propsBadge) propsBadge.textContent = properties.length;
+  el.innerHTML = properties.map(p=>`
+    <tr>
+      <td>
+        <div class="prop-info">
+          <div class="prop-thumb" style="background:var(--surface2);font-size:9px;color:var(--faint);text-align:center;display:flex;align-items:center;justify-content:center;width:44px;height:36px;border-radius:5px;border:1px solid var(--border)">IMG</div>
+          <div>
+            <div class="prop-name-cell">${p.name}</div>
+            <div class="prop-loc-cell">${p.location}</div>
+          </div>
+        </div>
+      </td>
+      <td style="color:var(--muted)">${p.location}</td>
+      <td>${fmt(p.rate)}</td>
+      ${showBeds ? `<td style="color:var(--muted)">${p.beds} bed · ${p.baths} bath</td>` : ''}
+      <td>${statusPill(p.status)}</td>
+      <td>
+        <div class="action-btns">
+          <button class="act-btn" onclick="openStatusModal(${p.id})">Status</button>
+          <button class="act-btn" onclick="editProp(${p.id})">Edit</button>
+          <button class="act-btn danger" onclick="deleteProp(${p.id})">Remove</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function loadAndRenderBookings(){
+  try {
+    const external = JSON.parse(localStorage.getItem('ls_bookings')||'[]');
+    // Load set of booking IDs we've already alerted about
+    let seenIds;
+    try { seenIds = new Set(JSON.parse(localStorage.getItem('ls_alerted_ids')||'[]')); } catch(e){ seenIds = new Set(); }
+
+    external.forEach(b=>{
+      if(!bookings.find(x=>x.id===b.id)){
+        bookings.unshift(b);
+        // Only fire an alert if we haven't seen this booking ID before
+        if(!seenIds.has(b.id)){
+          seenIds.add(b.id);
+          // Only fire booking alert if nBookings notification is enabled
+          const notifSettings = (()=>{ try{ return JSON.parse(localStorage.getItem('ls_settings')||'{}'); } catch(e){ return {}; } })();
+          const nBookingsOn = notifSettings.nBookings !== false; // default true
+          if(nBookingsOn){
+            addAlert('booking','New booking request: '+b.guest, b.prop+' · '+b.checkin+' – '+b.checkout+' · '+(b.origin||''), (()=>{ const n=(b.phone||b.origin||'').replace(/\D/g,''); return n.length>=10?'https://wa.me/'+n+'?text='+encodeURIComponent('Hi '+b.guest+', we received your booking request for '+b.prop+'.'):'' })());
+          }
+        }
+      }
+      // Sync confirmed bookings: auto-mark property as booked
+      if((b.status==='confirmed'||b.status==='pending') && b.prop){
+        const matchedProp = properties.find(p=>b.prop.toLowerCase().includes(p.name.toLowerCase())||p.name.toLowerCase().includes(b.prop.toLowerCase().split('—')[0].trim()));
+        if(matchedProp && b.status==='confirmed' && matchedProp.status==='available'){
+          matchedProp.status = 'booked';
+        }
+      }
+    });
+    // Persist updated seen IDs
+    try{ localStorage.setItem('ls_alerted_ids', JSON.stringify([...seenIds])); } catch(e){}
+  } catch(e){}
+  syncPropertiesToStorage();
+  renderBookings();
+  renderTable('propTableBody',false);
+  renderTable('propTableBody2',true);
+  // Update pending badge count
+  const pending = bookings.filter(b=>b.status==='pending').length;
+  document.querySelectorAll('.nav-badge').forEach((el,i)=>{ if(i===1) el.textContent=pending; });
+}
+
+function syncPropertiesToStorage(){
+  try{ 
+    localStorage.setItem('ls_properties', JSON.stringify(properties)); 
+  } catch(e){
+    showToast('Failed to save properties - storage may be full. Try removing some photos.','error');
+  }
+}
+
+// Default seed properties (only used when localStorage is empty)
+const DEFAULT_PROPERTIES = [
+  {id:1, name:'The Eko Suite', location:'Victoria Island', rate:85000, surge:140000, beds:2, baths:2, status:'available'},
+  {id:2, name:'Lekki Phase 1 Penthouse', location:'Lekki Phase 1', rate:120000, surge:200000, beds:3, baths:3, status:'booked'},
+  {id:3, name:'Ikoyi Garden Flat', location:'Ikoyi', rate:55000, surge:92000, beds:1, baths:1, status:'available'},
+];
+
+function loadPropertiesFromStorage(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('ls_properties')||'[]');
+    if(saved.length){
+      // Full restore — includes any user-added properties
+      properties = saved;
+    } else {
+      // First run — seed defaults and persist
+      properties = JSON.parse(JSON.stringify(DEFAULT_PROPERTIES));
+      syncPropertiesToStorage();
+    }
+  } catch(e){}
+}
+
+function confirmBooking(id){
+  const b = bookings.find(x=>x.id===id);
+  if(!b) return;
+  b.status='confirmed';
+  syncToStorage();
+  renderBookings();
+  renderTable('propTableBody',false);
+  renderDashboardStats(); // Update stats after confirmation
+  showToast('Booking confirmed — guest notified via WhatsApp');
+  // Resolve guest phone: website bookings use b.phone; seed bookings may use b.origin
+  const rawPhone = b.phone || b.origin || '';
+  let guestNum = rawPhone.replace(/\D/g,'');
+  if (guestNum.startsWith('0') && guestNum.length === 11) {
+    guestNum = '234' + guestNum.slice(1);
+  } else if (guestNum.length === 10 && !guestNum.startsWith('234')) {
+    guestNum = '234' + guestNum;
+  }
+  const confirmMsg = encodeURIComponent('Hi '+b.guest+', your booking for '+b.prop+' ('+b.checkin+' – '+b.checkout+') has been confirmed. Welcome to Lekki Stays!');
+  const waLink = guestNum.length >= 13 ? 'https://wa.me/'+guestNum+'?text='+confirmMsg : '';
+  addAlert('confirm', 'Booking confirmed: '+b.guest, b.prop+' · '+b.checkin+' – '+b.checkout, waLink);
+  // Open WhatsApp to notify guest
+  if(guestNum.length >= 10){
+    setTimeout(()=>window.open('https://wa.me/'+guestNum+'?text='+confirmMsg,'_blank'),500);
+  }
+}
+
+function verifyPayment(id){
+  const b = bookings.find(x=>x.id===id);
+  if(!b || !b.payRef) { showToast('No payment reference found', 'error'); return; }
+
+  if(PAYSTACK_SECRET_KEY === 'YOUR_PAYSTACK_SECRET_KEY_HERE') { 
+    showToast('Paystack secret key not configured. Please hardcode it in the code.', 'error'); 
+    return; 
+  }
+
+  showToast('Verifying payment with Paystack...');
+
+  fetch(`https://api.paystack.co/transaction/verify/${b.payRef}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data.status && data.data && data.data.status === 'success') {
+      // Check amount matches
+      const expectedAmount = b.amount * 100; // Paystack amount in kobo
+      if (data.data.amount === expectedAmount) {
+        confirmBooking(id);
+        showToast('✓ Payment verified and booking confirmed');
+      } else {
+        showToast(`Payment amount mismatch: Expected ₦${b.amount}, received ₦${data.data.amount / 100}`, 'error');
+      }
+    } else {
+      showToast('Payment not successful: ' + (data.message || 'Verification failed'), 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Verification error:', error);
+    showToast('Verification failed due to network error. Please check manually or try again.', 'error');
+  });
+}
+
+function syncToStorage(){
+  try { localStorage.setItem('ls_bookings', JSON.stringify(bookings.filter(b=>b.ts))); } catch(e){}
+}
+
+function renderBookings(filter='all'){
+  const list = document.getElementById('bookingList');
+  const db = document.getElementById('dashBookings');
+  const allSorted = [...bookings].sort((a,b)=>{ const order={pending:0,confirmed:1,completed:2}; return (order[a.status]||1)-(order[b.status]||1); });
+  const filtered = filter==='all' ? allSorted : allSorted.filter(b=>b.status===filter);
+
+  const cardHtml = (arr, max)=>arr.slice(0,max||arr.length).map(b=>`
+    <div class="booking-card" style="${b.status==='pending'?'border-color:var(--amber)':''}" >
+      <div class="booking-avatar">${b.initials||'?'}</div>
+      <div class="booking-info">
+        <div class="booking-guest">${b.guest}</div>
+        <div class="booking-detail">${b.prop} · ${b.checkin||''} – ${b.checkout||''} · ${b.origin||''}</div>
+        ${b.notes?`<div style="font-size:11px;color:var(--faint);margin-top:3px">Notes: ${b.notes}</div>`:''}
+      </div>
+      <div class="booking-meta">
+        <div class="booking-amount">${b.amount?fmt(b.amount):'TBC'}</div>
+        <div class="booking-nights">${b.nights||'?'} nights</div>
+        <div class="booking-status">${bookingStatusPill(b.status)}</div>
+        ${b.status==='pending'?`
+        <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
+          <button class="act-btn" style="font-size:11px" onclick="verifyPayment(${b.id})">Verify Payment</button>
+          <a class="act-btn" style="font-size:11px;text-decoration:none" href="${(()=>{ const n=(b.phone||b.origin||'').replace(/\D/g,''); return n.length>=10 ? 'https://wa.me/'+n+'?text='+encodeURIComponent('Hi '+b.guest+', your booking for '+b.prop+' ('+b.checkin+' – '+b.checkout+') has been received. We will confirm shortly.') : '#'; })()}" target="_blank" onclick="${(()=>{ const n=(b.phone||b.origin||'').replace(/\D/g,''); return n.length<10 ? 'event.preventDefault();alert(\'No valid phone number for this guest.\')' : ''; })()}">WhatsApp</a>
+        </div>`:''}
+      </div>
+    </div>
+  `).join('');
+
+  if(list) list.innerHTML = filtered.length ? cardHtml(filtered) : '<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No bookings found</div><div class="empty-sub">New bookings from the website appear here automatically.</div></div>';
+  if(db) db.innerHTML = cardHtml(allSorted, 3);
+
+  // Update dashboard stats
+  const pendingCount = bookings.filter(b=>b.status==='pending').length;
+  document.querySelectorAll('.stat-val').forEach((el,i)=>{ if(i===3) el.textContent=pendingCount; });
+}
+
+function renderDashboardStats(){
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  
+  const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
+  
+  // Earnings this month
+  const monthEarnings = confirmedBookings
+    .filter(b => {
+      const bookingDate = new Date(b.ts || b.checkin);
+      return bookingDate.getMonth() === currentMonth && bookingDate.getFullYear() === currentYear;
+    })
+    .reduce((sum, b) => sum + (b.amount || 0), 0);
+  
+  // Active properties (unique properties with confirmed bookings)
+  const activeProps = new Set(confirmedBookings.map(b => b.prop)).size;
+  
+  // Occupancy rate (active properties / total properties * 100)
+  const totalProps = properties.length;
+  const occupancyRate = totalProps > 0 ? Math.round((activeProps / totalProps) * 100) : 0;
+  
+  // Pending bookings
+  const pendingCount = bookings.filter(b => b.status === 'pending').length;
+  
+  // Update DOM
+  const monthText = '₦' + monthEarnings.toLocaleString();
+  document.getElementById('earn-month').textContent = monthText;
+  document.getElementById('dashboard-earn-month').textContent = monthText;
+  document.getElementById('active-properties').textContent = activeProps;
+  document.getElementById('activeProps').textContent = activeProps;
+  document.getElementById('occupancy-rate').textContent = occupancyRate + '%';
+  document.getElementById('dashboard-occupancy-rate').textContent = occupancyRate + '%';
+  document.getElementById('pending-bookings').textContent = pendingCount;
+  document.getElementById('dashboard-pending-bookings').textContent = pendingCount;
+}
+
+function renderAmenities(){
+  const g = document.getElementById('amenityGrid');
+  if(!g) return;
+  g.innerHTML = amenities.map(a=>`
+    <label class="amenity-check">
+      <input type="checkbox" data-amenity="${a}"/> ${a}
+    </label>
+  `).join('');
+}
+
+function getCheckedAmenities(gridId){
+  return Array.from(document.querySelectorAll('#'+gridId+' input[data-amenity]:checked'))
+    .map(cb=>cb.getAttribute('data-amenity'));
+}
+
+function renderChart(){
+  const el = document.getElementById('chartBars');
+  if(!el) return;
+
+  const fmtM = v => v>=1000000 ? '₦'+(v/1000000).toFixed(1)+'M' : v>=1000 ? '₦'+(v/1000).toFixed(0)+'k' : v>0 ? '₦'+v : '₦0';
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const curMonth = now.getMonth(); // 0-indexed
+
+  try{
+    const stored = JSON.parse(localStorage.getItem('ls_bookings')||'[]');
+    const confirmed = stored.filter(b=>b.status==='confirmed'&&b.amount>0);
+    // Also include hardcoded seed bookings
+    const allConfirmed = [...bookings.filter(b=>b.status==='confirmed'||b.status==='completed'), ...confirmed];
+
+    // Find date range: earliest booking to now
+    let earliestYear = curYear, earliestMonth = curMonth;
+    allConfirmed.forEach(b=>{
+      const d = new Date(b.checkin||b.ts||'');
+      if(!isNaN(d)){
+        if(d.getFullYear()<earliestYear||(d.getFullYear()===earliestYear&&d.getMonth()<earliestMonth)){
+          earliestYear=d.getFullYear(); earliestMonth=d.getMonth();
+        }
+      }
+    });
+
+    // Build month slots from earliest to current
+    const slots = []; // {year, month, label, amount}
+    let y=earliestYear, m=earliestMonth;
+    while(y<curYear||(y===curYear&&m<=curMonth)){
+      slots.push({year:y, month:m, label:months[m]+(y!==curYear?''+(y%100):''), amount:0});
+      m++; if(m>11){m=0;y++;}
+    }
+
+    // Fill confirmed amounts into slots
+    allConfirmed.forEach(b=>{
+      const d = new Date(b.checkin||b.ts||'');
+      if(isNaN(d)) return;
+      const slot = slots.find(s=>s.year===d.getFullYear()&&s.month===d.getMonth());
+      if(slot) slot.amount += (b.amount||0);
+    });
+
+    // Totals
+    const totalAll = allConfirmed.reduce((s,b)=>s+(b.amount||0),0);
+    const thisMonthSlot = slots.find(s=>s.year===curYear&&s.month===curMonth);
+    const totalMonth = thisMonthSlot ? thisMonthSlot.amount : 0;
+    const avg = allConfirmed.length ? Math.round(totalAll/allConfirmed.length) : 0;
+
+    // Stat cards
+    const yearLabel = earliestYear===curYear ? String(curYear) : earliestYear+'–'+curYear;
+    document.getElementById('earn-label-total').textContent = 'Total earned ('+yearLabel+')';
+    document.getElementById('earn-total').textContent = fmtM(totalAll);
+    document.getElementById('earn-total-sub').textContent = allConfirmed.length+' confirmed booking'+(allConfirmed.length!==1?'s':'');
+    document.getElementById('earn-label-month').textContent = months[curMonth]+' '+curYear;
+    document.getElementById('earn-month').textContent = fmtM(totalMonth);
+    document.getElementById('earn-month-sub').textContent = totalMonth>0 ? 'This month so far' : 'No bookings this month yet';
+    document.getElementById('earn-count').textContent = allConfirmed.length;
+    document.getElementById('earn-count-sub').textContent = 'Since first booking';
+    document.getElementById('earn-avg').textContent = avg>0 ? fmtM(avg) : '—';
+    document.getElementById('earn-avg-sub').textContent = avg>0 ? 'Per confirmed booking' : 'No confirmed bookings yet';
+
+    // Chart title
+    const chartTitle = slots.length>1 ? months[slots[0].month]+' '+slots[0].year+' – '+months[curMonth]+' '+curYear : months[curMonth]+' '+curYear;
+    document.getElementById('chartTitle').textContent = 'Monthly revenue · '+chartTitle;
+
+    // Render bars
+    if(!slots.length){ el.innerHTML='<div style="color:var(--faint);font-size:12px;padding:20px">No confirmed bookings yet.</div>'; return; }
+    const maxAmt = Math.max(...slots.map(s=>s.amount), 1);
+    el.innerHTML = slots.map(s=>`
+      <div class="bar-wrap" title="${s.label}: ${fmtM(s.amount)}">
+        <div style="width:100%;height:100%;display:flex;align-items:flex-end">
+          <div style="width:100%;border-radius:3px 3px 0 0;background:${s.year===curYear&&s.month===curMonth?'var(--amber)':'var(--amber-light)'};height:${Math.max(Math.round((s.amount/maxAmt)*100),s.amount>0?4:2)}%;opacity:${s.amount>0?1:0.25};transition:.2s"></div>
+        </div>
+        <div class="bar-label">${s.label}</div>
+      </div>
+    `).join('');
+
+    // Legend
+    document.getElementById('chartLegend').innerHTML =
+      '<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:var(--amber)"></div>This month</div>'+
+      (slots.length>1?'<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:var(--amber-light)"></div>Previous months</div>':'');
+
+  } catch(e){ console.error('renderChart error:',e); }
+}
+
+function updateEarningsStats(){ renderChart(); } // alias kept for compatibility
+
+// ── ALERTS ──
+function addAlert(type, title, body, link){
+  // Deduplicate by title+body so refreshing never re-adds the same alert
+  const key = title+'|'+body;
+  if(alerts.find(a=>a.title+'|'+a.body===key)) return;
+  const alert = {id:Date.now(), type, title, body, link, read:false, ts:new Date().toLocaleTimeString()};
+  alerts.unshift(alert);
+  persistAlerts();
+  updateAlertBadge();
+}
+
+function persistAlerts(){
+  try{ localStorage.setItem('ls_alerts', JSON.stringify(alerts)); } catch(e){}
+}
+
+function loadAlerts(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('ls_alerts')||'[]');
+    alerts = saved;
+  } catch(e){ alerts=[]; }
+  updateAlertBadge();
+}
+
+function updateAlertBadge(){
+  const unread = alerts.filter(a=>!a.read).length;
+  const badge = document.getElementById('alertBadge');
+  const topBadge = document.getElementById('topbarAlertBadge');
+  if(unread>0){
+    badge.textContent = unread; badge.style.display='inline-flex';
+    topBadge.textContent = unread; topBadge.style.display='inline-flex';
+  } else {
+    badge.style.display='none';
+    topBadge.style.display='none';
+  }
+}
+
+function markAlertsRead(){
+  alerts.forEach(a=>a.read=true);
+  persistAlerts();
+  updateAlertBadge();
+}
+
+function clearAllAlerts(){
+  alerts=[];
+  persistAlerts();
+  try{ localStorage.removeItem('ls_alerted_ids'); } catch(e){}
+  updateAlertBadge();
+  renderAlerts();
+  showToast('All alerts cleared');
+}
+
+function clearAllBookings(){
+  if(!confirm('Are you sure you want to clear all bookings? This cannot be undone.')) return;
+  bookings = [];
+  try { localStorage.removeItem('ls_bookings'); } catch(e){}
+  try { localStorage.removeItem('ls_alerted_ids'); } catch(e){}
+  // Reset filter to 'all'
+  const filterSelect = document.querySelector('select[onchange*="filterBookings"]');
+  if(filterSelect) filterSelect.value = 'all';
+  renderBookings('all');
+  renderTable('propTableBody',false);
+  // Also clear booking-related alerts
+  alerts = alerts.filter(a => a.type !== 'booking');
+  persistAlerts();
+  updateAlertBadge();
+  lastBookingsCount = 0; // Reset polling counter
+  renderDashboardStats(); // Update stats after clearing
+  showToast('All bookings cleared');
+}
+
+function renderAlerts(){
+  const el = document.getElementById('alertsList');
+  if(!el) return;
+  if(!alerts.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🔔</div><div class="empty-title">All clear!</div><div class="empty-sub">New booking requests and system alerts will appear here.</div></div>';
+    return;
+  }
+  const icons = {booking:'📅', payment:'💳', system:'⚙️', confirm:'✅', checkin:'⏰'};
+  el.innerHTML = alerts.map(a=>`
+    <div style="background:var(--surface);border:1px solid ${a.read?'var(--border)':'var(--amber)'};border-radius:10px;padding:16px 20px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start">
+      <div style="font-size:22px;flex-shrink:0">${icons[a.type]||'🔔'}</div>
+      <div style="flex:1">
+        <div style="font-weight:500;color:var(--text);margin-bottom:2px">${a.title} ${!a.read?'<span style="background:var(--amber);color:var(--bg);font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;vertical-align:middle">NEW</span>':''}</div>
+        <div style="font-size:12px;color:var(--muted)">${a.body}</div>
+        ${a.link?`<a href="${a.link}" target="_blank" style="font-size:11px;color:var(--amber);text-decoration:none;margin-top:4px;display:inline-block">Open WhatsApp →</a>`:''}
+      </div>
+      <div style="font-size:11px;color:var(--faint);flex-shrink:0">${a.ts}</div>
+    </div>
+  `).join('');
+}
+
+// ── PAYMENTS ──
+function savePaystackKeys(){
+  const pub = document.getElementById('paystackPubKey').value.trim();
+  const sec = document.getElementById('paystackSecKey').value.trim();
+  if(!pub||!sec){ showToast('Please enter both keys','error'); return; }
+  try{ 
+    localStorage.setItem('ls_paystack_pub', pub); 
+    localStorage.setItem('ls_paystack_sec', sec); 
+  } catch(e){}
+  document.getElementById('paystackStatus').innerHTML = '<span style="color:var(--green)">✓ Keys saved locally. To go live, add these to your server environment variables.</span>';
+  showToast('Paystack keys saved');
+  addAlert('payment','Paystack connected','Your Paystack payment gateway keys have been saved.','');
+}
+
+function saveFlwKeys(){
+  const pub = document.getElementById('flwPubKey').value.trim();
+  const sec = document.getElementById('flwSecKey').value.trim();
+  if(!pub||!sec){ showToast('Please enter both keys','error'); return; }
+  try{ localStorage.setItem('ls_flw_pub', pub); } catch(e){}
+  document.getElementById('flwStatus').innerHTML = '<span style="color:var(--green)">✓ Keys saved locally. To go live, add these to your server environment variables.</span>';
+  showToast('Flutterwave keys saved');
+  addAlert('payment','Flutterwave connected','Your Flutterwave payment gateway keys have been saved.','');
+}
+
+function saveEmailJSKeys(){
+  const pub = document.getElementById('emailjsPublic').value.trim();
+  const service = document.getElementById('emailjsService').value.trim();
+  const templateGuest = document.getElementById('emailjsTemplateGuest').value.trim();
+  const templateAdmin = document.getElementById('emailjsTemplateAdmin').value.trim();
+  
+  if(!pub||!service||!templateGuest||!templateAdmin){ 
+    showToast('⚠️ Please fill in all EmailJS fields','error'); 
+    return; 
+  }
+  
+  try{ 
+    localStorage.setItem('ls_emailjs_public', pub);
+    localStorage.setItem('ls_emailjs_service', service);
+    localStorage.setItem('ls_emailjs_template_guest', templateGuest);
+    localStorage.setItem('ls_emailjs_template_admin', templateAdmin);
+  } catch(e){}
+  
+  document.getElementById('emailjsStatus').innerHTML = '<span style="color:var(--green)">✓ Email configuration saved. Confirmation emails will be sent to guests automatically.</span>';
+  showToast('✅ EmailJS configured successfully');
+  addAlert('system','Email delivery enabled','Guests will now receive automatic confirmation emails after booking.','');
+}
+
+function renderPayments(){
+  const el = document.getElementById('paymentLog');
+  if(!el) return;
+  const paid = bookings.filter(b=>b.status==='confirmed'||b.status==='completed');
+  if(!paid.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">💳</div><div class="empty-title">No payments recorded yet</div><div class="empty-sub">Payments from confirmed bookings will appear here once your gateway is connected.</div></div>';
+    return;
+  }
+  el.innerHTML = `<div class="prop-table-wrap"><table class="prop-table"><thead><tr><th>Guest</th><th>Property</th><th>Dates</th><th>Amount</th><th>Status</th></tr></thead><tbody>
+  ${paid.map(b=>`<tr>
+    <td><span style="font-weight:500">${b.guest}</span></td>
+    <td style="color:var(--muted)">${b.prop}</td>
+    <td style="color:var(--muted);font-size:12px">${b.checkin} – ${b.checkout}</td>
+    <td style="font-weight:600">${b.amount?fmt(b.amount):'TBC'}</td>
+    <td><span class="status-pill ${b.status==='confirmed'?'available':'maintenance'}"><span class="status-dot"></span>${b.status==='confirmed'?'Paid':'Settled'}</span></td>
+  </tr>`).join('')}
+  </tbody></table></div>`;
+  const total = paid.reduce((s,b)=>s+(b.amount||0),0);
+  document.getElementById('payTotal').textContent = fmt(total);
+}
+
+// ── NAVIGATION ──
+function switchPanel(id, btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const panel = document.getElementById('panel-'+id);
+  if(panel) panel.classList.add('active');
+  if(btn) btn.classList.add('active');
+  const titles = {dashboard:'Dashboard',properties:'Properties',bookings:'Bookings',earnings:'Earnings',alerts:'Alerts',payments:'Payments',add:'Add property',settings:'Settings'};
+  document.getElementById('pageTitle').textContent = titles[id]||id;
+  closeSidebar();
+  if(id==='earnings') renderChart();
+  if(id==='alerts'){ renderAlerts(); markAlertsRead(); }
+  if(id==='payments') renderPayments();
+}
+
+// ── MODAL ──
+function openStatusModal(propId){
+  currentStatusPropId = propId;
+  const p = properties.find(x=>x.id===propId);
+  document.getElementById('modalSub').textContent = `Update status for "${p.name}"`;
+  document.getElementById('modalStatus').value = p.status;
+  document.getElementById('statusModal').classList.add('open');
+}
+function closeModal(){document.getElementById('statusModal').classList.remove('open')}
+function confirmStatus(){
+  const p = properties.find(x=>x.id===currentStatusPropId);
+  if(p){ p.status = document.getElementById('modalStatus').value; }
+  closeModal();
+  syncPropertiesToStorage();
+  renderTable('propTableBody',false);
+  renderTable('propTableBody2',true);
+  showToast('Status updated');
+}
+
+// ── ACTIONS ──
+// Tracks photos being edited (array of base64 strings)
+let editPhotos = [];
+
+function editProp(id){
+  const p = properties.find(x=>x.id===id);
+  if(!p) return;
+  currentEditPropId = id;
+  document.getElementById('editModalSub').textContent = 'Editing: ' + p.name;
+  document.getElementById('editName').value = p.name;
+  document.getElementById('editRate').value = p.rate;
+  document.getElementById('editSurge').value = p.surge||'';
+  document.getElementById('editStatus').value = p.status;
+  const locSel = document.getElementById('editLocation');
+  for(let i=0;i<locSel.options.length;i++){ if(locSel.options[i].value===p.location){ locSel.selectedIndex=i; break; } }
+  locSel.value = p.location;
+  document.getElementById('editBeds').value = String(p.beds);
+  document.getElementById('editBaths').value = String(p.baths);
+  // Load existing photos
+  editPhotos = Array.isArray(p.photos) ? [...p.photos] : [];
+  renderEditPhotoGrid();
+  // Render amenity checkboxes pre-ticked
+  const editAmenityGrid = document.getElementById('editAmenityGrid');
+  if(editAmenityGrid){
+    const saved = Array.isArray(p.amenities) ? p.amenities : [];
+    editAmenityGrid.innerHTML = amenities.map(a=>`
+      <label class="amenity-check">
+        <input type="checkbox" data-amenity="${a}" ${saved.includes(a)?'checked':''}/> ${a}
+      </label>
+    `).join('');
+  }
+  document.getElementById('editModal').classList.add('open');
+}
+
+function renderEditPhotoGrid(){
+  const grid = document.getElementById('editPhotoGrid');
+  const countEl = document.getElementById('editPhotoCount');
+  if(!grid) return;
+  if(!editPhotos.length){
+    grid.innerHTML = '<div style="font-size:11px;color:var(--faint);padding:4px 0">No photos yet — click Add photos below.</div>';
+    if(countEl) countEl.textContent='';
+    return;
+  }
+  grid.innerHTML = editPhotos.map((src,i)=>`
+    <div style="position:relative;border-radius:5px;overflow:hidden;border:1px solid var(--border);aspect-ratio:4/3">
+      <img src="${src}" style="width:100%;height:100%;object-fit:cover;display:block"/>
+      <button onclick="removeEditPhoto(${i})" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,.7);border:none;color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
+      ${i===0?'<div style="position:absolute;bottom:0;left:0;right:0;background:var(--amber);color:var(--bg);font-size:8px;text-align:center;padding:2px;font-weight:700">COVER</div>':''}
+    </div>
+  `).join('');
+  if(countEl) countEl.textContent = editPhotos.length+' / 20 photo'+(editPhotos.length!==1?'s':'');
+}
+
+function removeEditPhoto(index){
+  editPhotos.splice(index,1);
+  renderEditPhotoGrid();
+}
+
+function handleEditPhotoAdd(event){
+  const files = Array.from(event.target.files);
+  const remaining = 20 - editPhotos.length;
+  const valid = files.slice(0, remaining).filter(f=>f.size<=2*1024*1024);
+  if(files.some(f=>f.size>2*1024*1024)) showToast('Some files exceed 2MB and were skipped','error');
+  let loaded=0;
+  valid.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      editPhotos.push(e.target.result);
+      loaded++;
+      if(loaded===valid.length) renderEditPhotoGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value='';
+}
+function closeEditModal(){ document.getElementById('editModal').classList.remove('open'); }
+function saveEditProp(){
+  const p = properties.find(x=>x.id===currentEditPropId);
+  if(!p) return;
+  p.name = document.getElementById('editName').value.trim()||p.name;
+  p.location = document.getElementById('editLocation').value;
+  p.rate = parseInt(document.getElementById('editRate').value)||p.rate;
+  p.surge = parseInt(document.getElementById('editSurge').value)||p.surge;
+  p.status = document.getElementById('editStatus').value;
+  p.beds = document.getElementById('editBeds').value;
+  p.baths = document.getElementById('editBaths').value;
+  p.photos = [...editPhotos];
+  p.amenities = getCheckedAmenities('editAmenityGrid');
+  closeEditModal();
+  syncPropertiesToStorage();
+  renderTable('propTableBody',false);
+  renderTable('propTableBody2',true);
+  showToast('Property updated successfully');
+}
+function deleteProp(id){
+  if(!confirm('Remove this property? This cannot be undone.')) return;
+  properties = properties.filter(p=>p.id!==id);
+  syncPropertiesToStorage();
+  renderTable('propTableBody',false);
+  renderTable('propTableBody2',true);
+  showToast('Property removed');
+}
+function filterBookings(v){loadAndRenderBookings();renderBookings(v);}
+
+function saveProperty(){
+  const name = document.getElementById('newName').value.trim();
+  const zone = document.getElementById('newZone').value;
+  const rate = parseInt(document.getElementById('newRate').value)||0;
+  const beds = document.getElementById('newBeds').value;
+  const baths = document.getElementById('newBaths').value;
+  
+  // Validate and highlight missing fields
+  const errors = [];
+  if(!name) { document.getElementById('newName').style.borderColor='red'; errors.push('Property name'); }
+  else { document.getElementById('newName').style.borderColor=''; }
+  
+  if(!zone) { document.getElementById('newZone').style.borderColor='red'; errors.push('Location'); }
+  else { document.getElementById('newZone').style.borderColor=''; }
+  
+  if(!rate) { document.getElementById('newRate').style.borderColor='red'; errors.push('Rate'); }
+  else { document.getElementById('newRate').style.borderColor=''; }
+  
+  if(errors.length) {
+    const fieldList = errors.join(', ');
+    showToast('⚠️ Required fields missing: ' + fieldList, 'error');
+    return;
+  }
+  const selectedAmenities = getCheckedAmenities('amenityGrid');
+  const newP = {
+    id: Date.now(), name, location:zone, rate,
+    surge:parseInt(document.getElementById('newSurge').value)||rate*1.6,
+    beds, baths, status:'available',
+    amenities: selectedAmenities,
+    photos: uploadedPhotos.map(p=>p.dataUrl)
+  };
+  properties.push(newP);
+  syncPropertiesToStorage();
+  renderTable('propTableBody',false);
+  renderTable('propTableBody2',true);
+  document.getElementById('newName').value='';
+  document.getElementById('newRate').value='';
+  document.getElementById('newZone').value='';
+  document.getElementById('newDesc').value='';
+  // Reset checkboxes
+  document.querySelectorAll('#amenityGrid input[type=checkbox]').forEach(cb=>cb.checked=false);
+  // Reset photo upload state
+  uploadedPhotos=[];
+  renderPhotoPreview();
+  switchPanel('properties', document.querySelector('[onclick*=properties]'));
+  showToast('Property published!');
+}
+
+// ── SIDEBAR (mobile) ──
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg, type){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.style.background = type==='error' ? 'var(--red)' : 'var(--green)';
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ── PHOTO UPLOAD ──
+let uploadedPhotos = []; // stores { name, dataUrl }
+
+function handlePhotoUpload(event) {
+  const files = Array.from(event.target.files);
+  const remaining = 20 - uploadedPhotos.length;
+  if (!files.length) return;
+
+  const toAdd = files.slice(0, remaining);
+  const oversize = toAdd.filter(f => f.size > 2 * 1024 * 1024);
+  if (oversize.length) {
+    showToast('Some files exceed 2MB and were skipped', 'error');
+  }
+  const valid = toAdd.filter(f => f.size <= 2 * 1024 * 1024);
+
+  let loaded = 0;
+  valid.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      uploadedPhotos.push({ name: file.name, dataUrl: e.target.result });
+      loaded++;
+      if (loaded === valid.length) renderPhotoPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+  // reset input so same file can be re-added if removed
+  event.target.value = '';
+}
+
+function renderPhotoPreview() {
+  const grid = document.getElementById('photoPreviewGrid');
+  const count = document.getElementById('photoCount');
+  if (!grid) return;
+  if (!uploadedPhotos.length) {
+    grid.style.display = 'none';
+    count.style.display = 'none';
+    return;
+  }
+  grid.style.display = 'grid';
+  count.style.display = 'block';
+  count.textContent = uploadedPhotos.length + ' / 20 photo' + (uploadedPhotos.length !== 1 ? 's' : '') + ' selected';
+  grid.innerHTML = uploadedPhotos.map((p, i) => `
+    <div style="position:relative;border-radius:6px;overflow:hidden;border:1px solid var(--border);aspect-ratio:4/3">
+      <img src="${p.dataUrl}" style="width:100%;height:100%;object-fit:cover;display:block" alt="${p.name}"/>
+      <button onclick="removePhoto(${i})" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+      ${i===0?'<div style="position:absolute;bottom:0;left:0;right:0;background:var(--amber);color:var(--bg);font-size:9px;text-align:center;padding:2px;font-weight:600">COVER</div>':''}
+    </div>
+  `).join('');
+
+  // Update upload zone label
+  const zone = document.getElementById('uploadZone');
+  if (zone) {
+    zone.querySelector('.upload-text').textContent = uploadedPhotos.length < 20 ? 'Click to add more photos' : 'Maximum 20 photos reached';
+    zone.style.borderColor = 'var(--amber)';
+  }
+  showToast(uploadedPhotos.length + ' photo' + (uploadedPhotos.length !== 1 ? 's' : '') + ' ready');
+}
+
+function removePhoto(index) {
+  uploadedPhotos.splice(index, 1);
+  renderPhotoPreview();
+  if (!uploadedPhotos.length) {
+    const zone = document.getElementById('uploadZone');
+    if (zone) {
+      zone.querySelector('.upload-text').textContent = 'Click to upload property photos';
+      zone.style.borderColor = '';
+    }
+  }
+}
+
+// ── SETTINGS ──
+const SETTINGS_KEY = 'ls_settings';
+
+const SETTINGS_DEFAULTS = {
+  fullName: 'Adaora Okafor',
+  email: 'admin@lekkistays.com',
+  whatsApp: '+234 801 234 5678',
+  cancelPolicy: '48-hour free cancellation',
+  paymentMethod: 'Paystack (card + transfer)',
+  surgePeriod: 'Nov 15 – Jan 5',
+  bankName: 'Guaranty Trust Bank (GTB)',
+  acctName: 'Lekki Stays Ltd',
+  acctNumber: '0123456789',
+  businessName: 'Lekki Stays',
+  domain: 'lekkistays.com',
+  gaId: '',
+  nBookings: true,
+  nCheckin: true,
+  nEarnings: true,
+  nCleaning: false,
+};
+
+function loadSettings(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY)||'null');
+    const s = Object.assign({}, SETTINGS_DEFAULTS, saved||{});
+
+    // Account
+    document.getElementById('sFullName').value  = s.fullName;
+    document.getElementById('sEmail').value      = s.email;
+    document.getElementById('sWhatsApp').value   = s.whatsApp;
+
+    // Prefs
+    setSelectVal('sCancelPolicy',   s.cancelPolicy);
+    setSelectVal('sPaymentMethod',  s.paymentMethod);
+    document.getElementById('sSurgePeriod').value  = s.surgePeriod;
+    document.getElementById('sBankName').value     = s.bankName;
+    document.getElementById('sAcctName').value     = s.acctName;
+    document.getElementById('sAcctNumber').value   = s.acctNumber;
+
+    // Branding
+    document.getElementById('sBusinessName').value = s.businessName;
+    document.getElementById('sDomain').value        = s.domain;
+    document.getElementById('sGAID').value          = s.gaId;
+
+    // Notifications
+    document.getElementById('nBookings').checked = s.nBookings;
+    document.getElementById('nCheckin').checked  = s.nCheckin;
+    document.getElementById('nEarnings').checked = s.nEarnings;
+    document.getElementById('nCleaning').checked = s.nCleaning;
+
+    // Apply business name to sidebar brand
+    applyBrandName(s.businessName);
+  } catch(e){ console.warn('loadSettings error', e); }
+}
+
+function setSelectVal(id, val){
+  const el = document.getElementById(id);
+  if(!el) return;
+  for(let i=0;i<el.options.length;i++){
+    if(el.options[i].value===val||el.options[i].text===val){ el.selectedIndex=i; return; }
+  }
+}
+
+function getCurrentSettings(){
+  return {
+    fullName:      document.getElementById('sFullName').value.trim(),
+    email:         document.getElementById('sEmail').value.trim(),
+    whatsApp:      document.getElementById('sWhatsApp').value.trim(),
+    cancelPolicy:  document.getElementById('sCancelPolicy').value,
+    paymentMethod: document.getElementById('sPaymentMethod').value,
+    surgePeriod:   document.getElementById('sSurgePeriod').value.trim(),
+    bankName:      document.getElementById('sBankName').value.trim(),
+    acctName:      document.getElementById('sAcctName').value.trim(),
+    acctNumber:    document.getElementById('sAcctNumber').value.trim(),
+    businessName:  document.getElementById('sBusinessName').value.trim(),
+    domain:        document.getElementById('sDomain').value.trim(),
+    gaId:          document.getElementById('sGAID').value.trim(),
+    nBookings:     document.getElementById('nBookings').checked,
+    nCheckin:      document.getElementById('nCheckin').checked,
+    nEarnings:     document.getElementById('nEarnings').checked,
+    nCleaning:     document.getElementById('nCleaning').checked,
+  };
+}
+
+function saveSettingsSection(section){
+  try{
+    const s = getCurrentSettings();
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+    applyBrandName(s.businessName);
+    const labels = {account:'Account details saved', prefs:'Preferences saved', branding:'Site settings saved', notifications:'Notification settings saved'};
+    showToast(labels[section]||'Settings saved');
+  } catch(e){ showToast('Could not save settings','error'); }
+}
+
+function applyBrandName(name){
+  // Update sidebar brand text live
+  const brand = document.querySelector('.brand');
+  if(brand && name){
+    const parts = name.trim().split(' ');
+    const first = parts[0];
+    const rest  = parts.slice(1).join(' ');
+    brand.innerHTML = first + (rest ? ' <span>' + rest + '</span>' : '');
+  }
+  // Also update page title
+  document.title = (name || 'Lekki Stays') + ' — Property Manager Admin';
+}
+
+// ── CHECK-IN REMINDERS ──
+// Scans confirmed bookings and fires an alert for any guest checking in within 24 hours.
+// Respects the nCheckin notification setting. Runs once on load.
+function runCheckinReminders(){
+  try{
+    const s = (()=>{ try{ return JSON.parse(localStorage.getItem('ls_settings')||'{}'); } catch(e){ return {}; } })();
+    if(s.nCheckin === false) return; // user disabled check-in reminders
+
+    const now = new Date();
+    const in24h = new Date(now.getTime() + 24*60*60*1000);
+
+    // Gather all bookings (hardcoded + localStorage)
+    let allBookings = [...bookings];
+    try{
+      const ext = JSON.parse(localStorage.getItem('ls_bookings')||'[]');
+      ext.forEach(b=>{ if(!allBookings.find(x=>x.id===b.id)) allBookings.push(b); });
+    } catch(e){}
+
+    const confirmed = allBookings.filter(b=>b.status==='confirmed'||b.status==='pending');
+    confirmed.forEach(b=>{
+      if(!b.checkin) return;
+      const cin = new Date(b.checkin);
+      if(isNaN(cin)) return;
+      // Check-in is today or within 24 hours
+      if(cin >= now && cin <= in24h){
+        const hoursUntil = Math.round((cin - now) / (1000*60*60));
+        const timeLabel = hoursUntil <= 1 ? 'less than 1 hour' : hoursUntil + ' hours';
+        const phone = (b.phone||b.origin||'').replace(/\D/g,'');
+        const waLink = phone.length>=10
+          ? 'https://wa.me/'+phone+'?text='+encodeURIComponent('Hi '+b.guest+', reminder: your check-in at '+b.prop+' is today ('+b.checkin+'). We look forward to welcoming you!')
+          : '';
+        addAlert('checkin',
+          '⏰ Check-in reminder: '+b.guest,
+          b.prop+' · Check-in: '+b.checkin+' (in ~'+timeLabel+')',
+          waLink
+        );
+      }
+    });
+  } catch(e){ console.warn('checkInReminders error', e); }
+}
+
+// ── INIT ──
+loadAlerts();          // Load persisted alerts first (prevents re-seeding on refresh)
+loadPropertiesFromStorage(); // Restore any status changes made in previous session
+renderTable('propTableBody',false);
+renderTable('propTableBody2',true);
+loadAndRenderBookings();
+renderDashboardStats(); // Update live dashboard stats
+renderAmenities();
+
+// Polling for new bookings from demo site
+let lastBookingsCount = bookings.length;
+setInterval(() => {
+  loadAndRenderBookings();
+  renderDashboardStats(); // Update stats on polling
+  const currentCount = bookings.length;
+  if (currentCount > lastBookingsCount) {
+    const newBookings = bookings.slice(0, currentCount - lastBookingsCount);
+    newBookings.forEach(b => {
+      addAlert('booking', 'New booking received', `${b.guest} booked ${b.prop} (${b.checkin} – ${b.checkout})`, '');
+    });
+  }
+  lastBookingsCount = currentCount;
+}, 5000); // Check every 5 seconds
+loadSettings();        // Restore saved settings and apply to UI
+runCheckinReminders(); // Fire 24hr check-in alerts for upcoming confirmed bookings
+// Load saved payment keys
+try{
+  const pk = localStorage.getItem('ls_paystack_pub');
+  if(pk){ document.getElementById('paystackPubKey').value=pk; document.getElementById('paystackStatus').innerHTML='<span style="color:var(--green)">✓ Keys saved.</span>'; }
+  const fk = localStorage.getItem('ls_flw_pub');
+  if(fk){ document.getElementById('flwPubKey').value=fk; document.getElementById('flwStatus').innerHTML='<span style="color:var(--green)">✓ Keys saved.</span>'; }
+} catch(e){}
+</script>
+</body>
+</html>
