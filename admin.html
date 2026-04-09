@@ -183,6 +183,7 @@ input,select,textarea{font-family:'DM Sans',sans-serif}
 
 /* ── BOOKINGS ── */
 .booking-list{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.booking-section{display:block;margin-bottom:24px}
 .booking-card{
   background:var(--surface);border:1px solid var(--border);
   border-radius:10px;padding:16px 20px;
@@ -202,6 +203,10 @@ input,select,textarea{font-family:'DM Sans',sans-serif}
 .booking-amount{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;color:var(--text)}
 .booking-nights{font-size:11px;color:var(--muted);margin-top:2px}
 .booking-status{margin-top:6px}
+
+/* ── BOOKING SECTIONS ── */
+.booking-section{margin-bottom:32px}
+.booking-section:last-child{margin-bottom:24px}
 
 /* ── ADD PROPERTY FORM ── */
 .form-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px;margin-bottom:20px}
@@ -316,6 +321,27 @@ select.form-input option{background:var(--surface2)}
 }
 .toast.show{display:flex}
 @keyframes slideup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CALENDAR ── */
+.admin-calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:16px}
+.admin-calendar-header{grid-column:1/-1;display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:12px}
+.admin-weekday{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);text-align:center;padding:8px 0}
+.admin-date-cell{
+  aspect-ratio:1;border:1px solid var(--border2);border-radius:6px;padding:8px;
+  background:var(--surface2);cursor:pointer;transition:all .15s;
+  display:flex;flex-direction:column;gap:4px;overflow:hidden;
+}
+.admin-date-cell:hover{border-color:var(--amber);background:var(--surface)}
+.admin-date-cell.other-month{opacity:.3}
+.admin-date-cell.today{border-color:var(--amber);border-width:2px;padding:7px}
+.admin-date-num{font-size:12px;font-weight:500;color:var(--text)}
+.admin-date-bookings{display:flex;flex-direction:column;gap:2px;font-size:9px}
+.admin-booking-dot{
+  width:100%;height:3px;border-radius:1px;
+  background:var(--green);
+}
+.admin-booking-dot.pending{background:var(--amber)}
+.admin-booking-dot.completed{background:var(--blue)}
 
 /* ── MOBILE OVERLAY ── */
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:190}
@@ -494,9 +520,9 @@ select.form-input option{background:var(--surface2)}
           <div class="stat-sub" id="activePropsSub">Properties with bookings</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Pending bookings</div>
+          <div class="stat-label">Confirmed bookings</div>
           <div class="stat-val" id="dashboard-pending-bookings">0</div>
-          <div class="stat-sub"><span class="stat-down">Needs action</span></div>
+          <div class="stat-sub"><span class="stat-up">Payment received</span></div>
         </div>
       </div>
 
@@ -544,14 +570,40 @@ select.form-input option{background:var(--surface2)}
         <div style="display:flex;gap:8px">
           <select class="form-input" style="padding:7px 12px;font-size:12px;width:auto" onchange="filterBookings(this.value)">
             <option value="all">All statuses</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
+            <option value="confirmed">Confirmed (Payment received)</option>
+            <option value="ongoing">Ongoing (Booking started)</option>
+            <option value="completed">Completed (Booking ended)</option>
           </select>
           <button class="sec-action" onclick="clearAllBookings()" style="font-size:12px">Clear All Bookings</button>
         </div>
       </div>
-      <div class="booking-list" id="bookingList"></div>
+      
+      <!-- Confirmed Bookings -->
+      <div class="booking-section" id="confirmed-section">
+        <div class="sec-head" style="margin-bottom:12px">
+          <div class="sec-title" style="font-size:14px;color:var(--green)">✅ Confirmed (Payment received)</div>
+          <div class="sec-action" style="font-size:12px" id="confirmed-count">0 bookings</div>
+        </div>
+        <div class="booking-list" id="confirmed-list"></div>
+      </div>
+      
+      <!-- Ongoing Bookings -->
+      <div class="booking-section" id="ongoing-section">
+        <div class="sec-head" style="margin-bottom:12px">
+          <div class="sec-title" style="font-size:14px;color:var(--blue)">🔄 Ongoing (Booking started)</div>
+          <div class="sec-action" style="font-size:12px" id="ongoing-count">0 bookings</div>
+        </div>
+        <div class="booking-list" id="ongoing-list"></div>
+      </div>
+      
+      <!-- Completed Bookings -->
+      <div class="booking-section" id="completed-section">
+        <div class="sec-head" style="margin-bottom:12px">
+          <div class="sec-title" style="font-size:14px;color:var(--muted)">✅ Completed (Booking ended)</div>
+          <div class="sec-action" style="font-size:12px" id="completed-count">0 bookings</div>
+        </div>
+        <div class="booking-list" id="completed-list"></div>
+      </div>
     </div>
 
     <!-- ── EARNINGS ── -->
@@ -573,9 +625,9 @@ select.form-input option{background:var(--surface2)}
           <div class="stat-sub" id="occupancy-rate-sub">Booked vs available</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Pending bookings</div>
+          <div class="stat-label">Confirmed bookings</div>
           <div class="stat-val" id="pending-bookings">—</div>
-          <div class="stat-sub" id="pending-bookings-sub">Awaiting verification</div>
+          <div class="stat-sub" id="pending-bookings-sub">Payment received, awaiting check-in</div>
         </div>
       </div>
       <div class="earnings-grid">
@@ -1127,6 +1179,7 @@ let properties = [
 let bookings = [
   // Seed bookings removed for clean demo
 ];
+let currentBookingFilter = 'all';
 
 const amenities = [
   '24hr power (gen + NEPA)','Wifi (fibre)','Air conditioning','Swimming pool',
@@ -1156,9 +1209,31 @@ function statusPill(s){
   return `<span class="status-pill ${cls}"><span class="status-dot"></span>${label}</span>`;
 }
 
+function getBookingStatus(booking) {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  
+  // If booking has no checkin/checkout dates, keep original status
+  if (!booking.checkin || !booking.checkout) {
+    return booking.status || 'confirmed';
+  }
+  
+  const checkinDate = booking.checkin;
+  const checkoutDate = booking.checkout;
+  
+  if (checkoutDate < today) {
+    return 'completed'; // Booking has ended
+  } else if (checkinDate <= today && checkoutDate >= today) {
+    return 'ongoing'; // Booking is currently active
+  } else {
+    return 'confirmed'; // Payment received, booking hasn't started yet
+  }
+}
+
 function bookingStatusPill(s){
-  const map = {pending:'status-pill booked',confirmed:'status-pill available',completed:'status-pill maintenance'};
-  return `<span class="${map[s]||'status-pill'}"><span class="status-dot"></span>${s.charAt(0).toUpperCase()+s.slice(1)}</span>`;
+  const map = {confirmed:'status-pill available',ongoing:'status-pill booked',completed:'status-pill maintenance'};
+  const labels = {confirmed:'Payment received',ongoing:'Booking started',completed:'Booking ended'};
+  return `<span class="${map[s]||'status-pill'}"><span class="status-dot"></span>${labels[s]||s.charAt(0).toUpperCase()+s.slice(1)}</span>`;
 }
 
 function renderTable(tbodyId, showBeds){
@@ -1226,7 +1301,7 @@ function loadAndRenderBookings(){
     try{ localStorage.setItem('ls_alerted_ids', JSON.stringify([...seenIds])); } catch(e){}
   } catch(e){}
   syncPropertiesToStorage();
-  renderBookings();
+  renderBookings(currentBookingFilter);
   renderTable('propTableBody',false);
   renderTable('propTableBody2',true);
   // Update pending badge count
@@ -1268,7 +1343,7 @@ function confirmBooking(id){
   if(!b) return;
   b.status='confirmed';
   syncToStorage();
-  renderBookings();
+  renderBookings(currentBookingFilter);
   renderTable('propTableBody',false);
   renderDashboardStats(); // Update stats after confirmation
   showToast('Booking confirmed — guest notified via WhatsApp');
@@ -1333,18 +1408,44 @@ function verifyPayment(id){
   });
 }
 
-function syncToStorage(){
-  try { localStorage.setItem('ls_bookings', JSON.stringify(bookings.filter(b=>b.ts))); } catch(e){}
+function markBookingOngoing(id) {
+  const booking = bookings.find(b => b.id === id);
+  if (booking) {
+    booking.status = 'ongoing';
+    syncToStorage();
+    renderBookings(currentBookingFilter);
+    showToast('Booking marked as ongoing');
+  }
+}
+
+function markBookingCompleted(id) {
+  const booking = bookings.find(b => b.id === id);
+  if (booking) {
+    booking.status = 'completed';
+    syncToStorage();
+    renderBookings(currentBookingFilter);
+    showToast('Booking marked as completed');
+  }
 }
 
 function renderBookings(filter='all'){
+  // Update booking statuses based on dates
+  bookings.forEach(b => {
+    b.status = getBookingStatus(b);
+  });
+  
   const list = document.getElementById('bookingList');
   const db = document.getElementById('dashBookings');
-  const allSorted = [...bookings].sort((a,b)=>{ const order={pending:0,confirmed:1,completed:2}; return (order[a.status]||1)-(order[b.status]||1); });
+  const allSorted = [...bookings].sort((a,b)=>new Date(b.ts||b.checkin||0)-new Date(a.ts||a.checkin||0));
   const filtered = filter==='all' ? allSorted : allSorted.filter(b=>b.status===filter);
+  
+  // Group bookings by status
+  const confirmedBookings = allSorted.filter(b => b.status === 'confirmed');
+  const ongoingBookings = allSorted.filter(b => b.status === 'ongoing');
+  const completedBookings = allSorted.filter(b => b.status === 'completed');
 
   const cardHtml = (arr, max)=>arr.slice(0,max||arr.length).map(b=>`
-    <div class="booking-card" style="${b.status==='pending'?'border-color:var(--amber)':''}" >
+    <div class="booking-card" style="${b.status==='confirmed'?'border-color:var(--green)':b.status==='ongoing'?'border-color:var(--blue)':''}" >
       <div class="booking-avatar">${b.initials||'?'}</div>
       <div class="booking-info">
         <div class="booking-guest">${b.guest}</div>
@@ -1355,21 +1456,93 @@ function renderBookings(filter='all'){
         <div class="booking-amount">${b.amount?fmt(b.amount):'TBC'}</div>
         <div class="booking-nights">${b.nights||'?'} nights</div>
         <div class="booking-status">${bookingStatusPill(b.status)}</div>
-        ${b.status==='pending'?`
+        ${b.status==='confirmed'?`
         <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
-          <button class="act-btn" style="font-size:11px" onclick="verifyPayment(${b.id})">Verify Payment</button>
-          <a class="act-btn" style="font-size:11px;text-decoration:none" href="${(()=>{ const n=(b.phone||b.origin||'').replace(/\D/g,''); return n.length>=10 ? 'https://wa.me/'+n+'?text='+encodeURIComponent('Hi '+b.guest+', your booking for '+b.prop+' ('+b.checkin+' – '+b.checkout+') has been received. We will confirm shortly.') : '#'; })()}" target="_blank" onclick="${(()=>{ const n=(b.phone||b.origin||'').replace(/\D/g,''); return n.length<10 ? 'event.preventDefault();alert(\'No valid phone number for this guest.\')' : ''; })()}">WhatsApp</a>
+          <button class="act-btn" style="font-size:11px" onclick="markBookingOngoing(${b.id})">Mark as Started</button>
+          <a class="act-btn" style="font-size:11px;text-decoration:none" href="${(()=>{ const n=(b.phone||b.origin||'').replace(/\D/g,''); return n.length>=10 ? 'https://wa.me/'+n+'?text='+encodeURIComponent('Hi '+b.guest+', your booking for '+b.prop+' is confirmed. Check-in: '+b.checkin+'.') : '#'; })()}" target="_blank" onclick="${(()=>{ const n=(b.phone||b.origin||'').replace(/\D/g,''); return n.length<10 ? 'event.preventDefault();alert(\'No valid phone number for this guest.\')' : ''; })()}">WhatsApp</a>
+        </div>`:''}
+        ${b.status==='ongoing'?`
+        <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
+          <button class="act-btn" style="font-size:11px" onclick="markBookingCompleted(${b.id})">Mark as Completed</button>
+          <a class="act-btn" style="font-size:11px;text-decoration:none" href="${(()=>{ const n=(b.phone||b.origin||'').replace(/\D/g,''); return n.length>=10 ? 'https://wa.me/'+n+'?text='+encodeURIComponent('Hi '+b.guest+', how is your stay at '+b.prop+'? Check-out: '+b.checkout+'.') : '#'; })()}" target="_blank" onclick="${(()=>{ const n=(b.phone||b.origin||'').replace(/\D/g,''); return n.length<10 ? 'event.preventDefault();alert(\'No valid phone number for this guest.\')' : ''; })()}">WhatsApp</a>
         </div>`:''}
       </div>
     </div>
   `).join('');
 
-  if(list) list.innerHTML = filtered.length ? cardHtml(filtered) : '<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No bookings found</div><div class="empty-sub">New bookings from the website appear here automatically.</div></div>';
-  if(db) db.innerHTML = cardHtml(allSorted, 3);
+  // Assign HTML to the respective sections
+  document.getElementById('confirmed-list').innerHTML = cardHtml(confirmedBookings);
+  document.getElementById('ongoing-list').innerHTML = cardHtml(ongoingBookings);
+  document.getElementById('completed-list').innerHTML = cardHtml(completedBookings);
+  
+  // Update counts
+  document.getElementById('confirmed-count').textContent = confirmedBookings.length + ' booking' + (confirmedBookings.length !== 1 ? 's' : '');
+  document.getElementById('ongoing-count').textContent = ongoingBookings.length + ' booking' + (ongoingBookings.length !== 1 ? 's' : '');
+  document.getElementById('completed-count').textContent = completedBookings.length + ' booking' + (completedBookings.length !== 1 ? 's' : '');
 
-  // Update dashboard stats
-  const pendingCount = bookings.filter(b=>b.status==='pending').length;
+  // Ensure all sections are visible when filter is 'all'
+  if (filter === 'all') {
+    const confirmedSection = document.getElementById('confirmed-section');
+    const ongoingSection = document.getElementById('ongoing-section');
+    const completedSection = document.getElementById('completed-section');
+    
+    if (confirmedSection) confirmedSection.style.display = 'block';
+    if (ongoingSection) ongoingSection.style.display = 'block';
+    if (completedSection) completedSection.style.display = 'block';
+  }
   document.querySelectorAll('.stat-val').forEach((el,i)=>{ if(i===3) el.textContent=pendingCount; });
+}
+
+function filterBookings(filterValue) {
+  currentBookingFilter = filterValue;
+  const confirmedSection = document.getElementById('confirmed-section');
+  const ongoingSection = document.getElementById('ongoing-section');
+  const completedSection = document.getElementById('completed-section');
+  
+  if (filterValue === 'all') {
+    // Show all sections
+    confirmedSection.style.display = 'block';
+    ongoingSection.style.display = 'block';
+    completedSection.style.display = 'block';
+  } else if (filterValue === 'confirmed') {
+    // Show only confirmed section
+    confirmedSection.style.display = 'block';
+    ongoingSection.style.display = 'none';
+    completedSection.style.display = 'none';
+  } else if (filterValue === 'ongoing') {
+    // Show only ongoing section
+    confirmedSection.style.display = 'none';
+    ongoingSection.style.display = 'block';
+    completedSection.style.display = 'none';
+  } else if (filterValue === 'completed') {
+    // Show only completed section
+    confirmedSection.style.display = 'none';
+    ongoingSection.style.display = 'none';
+    completedSection.style.display = 'block';
+  }
+  
+  // Re-render bookings to ensure they're up to date
+  renderBookings(filterValue);
+}
+
+function markBookingOngoing(id) {
+  const booking = bookings.find(b => b.id === id);
+  if (booking) {
+    booking.status = 'ongoing';
+    try { localStorage.setItem('ls_bookings', JSON.stringify(bookings.filter(b=>b.ts))); } catch(e){}
+    renderBookings(currentBookingFilter);
+    showToast('Booking marked as ongoing');
+  }
+}
+
+function markBookingCompleted(id) {
+  const booking = bookings.find(b => b.id === id);
+  if (booking) {
+    booking.status = 'completed';
+    try { localStorage.setItem('ls_bookings', JSON.stringify(bookings.filter(b=>b.ts))); } catch(e){}
+    renderBookings(currentBookingFilter);
+    showToast('Booking marked as completed');
+  }
 }
 
 function renderDashboardStats(){
@@ -1377,7 +1550,12 @@ function renderDashboardStats(){
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
   
-  const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
+  // Update booking statuses first
+  bookings.forEach(b => {
+    b.status = getBookingStatus(b);
+  });
+  
+  const confirmedBookings = bookings.filter(b => b.status === 'confirmed' || b.status === 'ongoing' || b.status === 'completed');
   
   // Earnings this month
   const monthEarnings = confirmedBookings
@@ -1387,15 +1565,15 @@ function renderDashboardStats(){
     })
     .reduce((sum, b) => sum + (b.amount || 0), 0);
   
-  // Active properties (unique properties with confirmed bookings)
-  const activeProps = new Set(confirmedBookings.map(b => b.prop)).size;
+  // Active properties (unique properties with ongoing bookings)
+  const activeProps = new Set(bookings.filter(b => b.status === 'ongoing').map(b => b.prop)).size;
   
   // Occupancy rate (active properties / total properties * 100)
   const totalProps = properties.length;
   const occupancyRate = totalProps > 0 ? Math.round((activeProps / totalProps) * 100) : 0;
   
-  // Pending bookings
-  const pendingCount = bookings.filter(b => b.status === 'pending').length;
+  // Confirmed bookings (payment received, awaiting check-in)
+  const confirmedCount = bookings.filter(b => b.status === 'confirmed').length;
   
   // Update DOM
   const monthText = '₦' + monthEarnings.toLocaleString();
@@ -1405,8 +1583,8 @@ function renderDashboardStats(){
   document.getElementById('activeProps').textContent = activeProps;
   document.getElementById('occupancy-rate').textContent = occupancyRate + '%';
   document.getElementById('dashboard-occupancy-rate').textContent = occupancyRate + '%';
-  document.getElementById('pending-bookings').textContent = pendingCount;
-  document.getElementById('dashboard-pending-bookings').textContent = pendingCount;
+  document.getElementById('pending-bookings').textContent = confirmedCount;
+  document.getElementById('dashboard-pending-bookings').textContent = confirmedCount;
 }
 
 function renderAmenities(){
@@ -1520,6 +1698,7 @@ function addAlert(type, title, body, link){
   alerts.unshift(alert);
   persistAlerts();
   updateAlertBadge();
+  renderAlerts();
 }
 
 function persistAlerts(){
@@ -1532,6 +1711,7 @@ function loadAlerts(){
     alerts = saved;
   } catch(e){ alerts=[]; }
   updateAlertBadge();
+  renderAlerts();
 }
 
 function updateAlertBadge(){
@@ -1806,7 +1986,6 @@ function deleteProp(id){
   renderTable('propTableBody2',true);
   showToast('Property removed');
 }
-function filterBookings(v){loadAndRenderBookings();renderBookings(v);}
 
 function saveProperty(){
   const name = document.getElementById('newName').value.trim();
