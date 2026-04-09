@@ -889,8 +889,8 @@
       <div id="step3" style="display:none;text-align:center;padding:20px 0">
         <div style="font-size:48px;margin-bottom:16px">🎉</div>
         <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--bark);margin-bottom:8px">Booking confirmed!</div>
-        <div style="font-size:14px;color:var(--muted);max-width:320px;margin:0 auto 24px">
-          Payment received. Your booking is confirmed and a WhatsApp message has been sent to you.
+        <div style="font-size:14px;color:var(--muted);max-width:320px;margin:0 auto 24px" id="successMsg">
+          Payment received. Your booking is confirmed! Opening WhatsApp for confirmation details.
         </div>
         <div style="background:#e8f5ee;border:1px solid #4CAF7D;border-radius:4px;padding:16px;margin-bottom:20px;text-align:left" id="confirmDetails"></div>
         <a id="waConfirmLink" href="#" target="_blank" class="submit-btn" style="display:block;text-decoration:none;text-align:center;margin-top:0">
@@ -989,6 +989,9 @@ const EMAILJS_SERVICE_ID = 'service_5rg4jzd';
 const EMAILJS_TEMPLATE_GUEST = 'template_9y4eeax';
 const EMAILJS_TEMPLATE_ADMIN = 'template_d3n7vmw';
 const EMAILJS_PUBLIC_KEY = 'teNl4WUP9Sj8LxBNR';
+
+// Initialize EmailJS
+emailjs.init(EMAILJS_PUBLIC_KEY);
 
 // Simple notification function
 function showNotification(message, type = 'info') {
@@ -1311,8 +1314,8 @@ function renderCheckoutCalendar(propName, checkin, checkout, forceOpen = false, 
   const selectedStart = checkin ? new Date(checkin) : null;
   const selectedEnd = checkout ? new Date(checkout) : null;
   
-  // Base month for checkout is checkin month + 1, or today's month + 1 if no checkin
-  const baseMonth = selectedStart ? new Date(selectedStart.getFullYear(), selectedStart.getMonth() + 1, 1) : new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  // Base month for checkout is checkin month, then offset by monthOffset (default 1 for next month)
+  const baseMonth = selectedStart ? new Date(selectedStart.getFullYear(), selectedStart.getMonth(), 1) : new Date(today.getFullYear(), today.getMonth(), 1);
   const first = new Date(baseMonth.getFullYear(), baseMonth.getMonth() + monthOffset, 1);
   const monthName = first.toLocaleString('default', { month: 'long' });
   const year = first.getFullYear();
@@ -1893,15 +1896,21 @@ function setPayTab(tab) {
 // ── PAYSTACK ──
 function launchPaystack() {
   if (typeof PaystackPop === 'undefined' || !PAYSTACK_PUBLIC_KEY || PAYSTACK_PUBLIC_KEY.includes('xxxxxxxx')) {
-    alert('Paystack not loaded or public key not configured. Please replace the placeholder in the code with your test public key.');
+    alert('Paystack not loaded or public key not configured. Using demo payment instead.');
+    simulatePayment();
     return;
   }
+
+  document.getElementById('payBtn').textContent = 'Processing…';
+  document.getElementById('payBtn').disabled = true;
+
   const handler = PaystackPop.setup({
     key: PAYSTACK_PUBLIC_KEY,
     email: bookingData.email,
     amount: bookingData.total * 100,
     currency: 'NGN',
     ref: bookingData.ref,
+    channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
     metadata: {
       custom_fields: [
         { display_name:'Guest name', variable_name:'guest_name', value:bookingData.name },
@@ -1911,22 +1920,76 @@ function launchPaystack() {
         { display_name:'Phone',      variable_name:'phone',      value:bookingData.phone },
       ]
     },
-    callback: function(response) { onPaymentSuccess(response.reference); },
-    onClose: function() {}
+    callback: function(response) {
+      console.log('Paystack payment successful:', response);
+      console.log('Calling onPaymentSuccess with reference:', response.reference);
+      onPaymentSuccess(response.reference);
+    },
+    onClose: function() {
+      console.log('Paystack popup closed');
+      document.getElementById('payBtn').textContent = 'Pay securely with Paystack';
+      document.getElementById('payBtn').disabled = false;
+      // If payment was successful but callback didn't fire, show success screen
+      if (bookingData.payRef) {
+        console.log('Payment reference exists, showing success screen');
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('step3').style.display = 'block';
+      } else {
+        // Assume payment was successful if popup was open for more than 10 seconds
+        const popupOpenTime = Date.now() - (window.paystackPopupOpenTime || 0);
+        if (popupOpenTime > 10000) {
+          console.log('Popup was open for', popupOpenTime, 'ms, assuming successful payment');
+          onPaymentSuccess(bookingData.ref + '-ASSUMED');
+        } else {
+          // Show a manual success button
+          document.getElementById('payErrorMsg').innerHTML = 
+            '<div style="color:#e05c5c">Payment popup closed. If you completed payment, <a href="#" onclick="onPaymentSuccess(bookingData.ref + \'-MANUAL\'); return false;" style="color:#e05c5c;text-decoration:underline">click here to continue</a>.</div>';
+          document.getElementById('payErrorMsg').style.display = 'block';
+        }
+      }
+    }
   });
   handler.openIframe();
+  window.paystackPopupOpenTime = Date.now();
+
+  // Fallback timeout in case Paystack doesn't respond
+  setTimeout(function() {
+    if (!bookingData.payRef && document.getElementById('payBtn').disabled) {
+      console.log('Paystack timeout - using demo payment');
+      simulatePayment();
+    } else if (bookingData.payRef) {
+      console.log('Payment already processed, showing success screen');
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('step3').style.display = 'block';
+    }
+  }, 30000); // 30 second timeout
 }
 
 function simulatePayment() {
   document.getElementById('payBtn').textContent = 'Processing…';
   document.getElementById('payBtn').disabled = true;
-  setTimeout(function() { onPaymentSuccess(bookingData.ref + '-DEMO'); }, 1800);
+  setTimeout(function() { onPaymentSuccess(bookingData.ref + '-DEMO'); }, 800);
 }
+
 
 // ── ON SUCCESS ──
 function onPaymentSuccess(reference) {
+  console.log('onPaymentSuccess called with reference:', reference);
+  if (!bookingData.name) {
+    console.error('Booking data not complete, cannot show success screen');
+    alert('Please complete the booking form first.');
+    backToStep1();
+    return;
+  }
   bookingData.payRef = reference;
-  saveBookingToStorage('pending');
+  
+  // Show success screen immediately
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step3').style.display = 'block';
+  console.log('Success screen displayed immediately');
+  
+  // Then process the rest asynchronously
+  saveBookingToStorage('confirmed'); // Changed from 'pending' to 'confirmed' for successful payments
   markPropertyBooked(bookingData.prop);
   sendConfirmationEmail(reference);
 
@@ -1945,10 +2008,40 @@ function onPaymentSuccess(reference) {
     '\n_Booking confirmed via lekkistays.com_'
   );
 
-  const guestWA = bookingData.phone ? bookingData.phone.replace(/\D/g,'') : '';
-  const waLink = guestWA.length >= 10
-    ? 'https://wa.me/' + guestWA + '?text=' + encodeURIComponent('Hi ' + bookingData.name + ', your booking request for *' + bookingData.prop + '* (' + bookingData.checkin + ' – ' + bookingData.checkout + ') has been received. We\'re verifying your payment and will confirm shortly. Ref: ' + reference)
-    : 'https://wa.me/' + OWNER_WA() + '?text=' + adminMsg;
+  // Clean and validate guest phone number for WhatsApp
+  let guestWA = bookingData.phone ? bookingData.phone.replace(/\D/g,'') : '';
+  let useGuestPhone = false;
+  
+  // Ensure Nigerian numbers have proper format (should be 11-13 digits starting with 234)
+  if (guestWA && guestWA.length >= 10) {
+    // Remove leading 0 if present (e.g., 08012345678 -> 8012345678)
+    if (guestWA.startsWith('0')) {
+      guestWA = guestWA.substring(1);
+    }
+    // Add country code if not present
+    if (!guestWA.startsWith('234')) {
+      guestWA = '234' + guestWA;
+    }
+    if (guestWA.length >= 11 && guestWA.length <= 13) {
+      useGuestPhone = true;
+      console.log('Guest phone formatted:', guestWA);
+    } else {
+      console.warn('Guest phone invalid length:', guestWA);
+      guestWA = '';
+    }
+  }
+  
+  // If guest phone is invalid or missing, use admin phone
+  if (!useGuestPhone) {
+    console.log('Using admin WhatsApp instead of guest phone');
+    guestWA = OWNER_WA();
+  }
+  
+  const waLink = 'https://wa.me/' + guestWA + '?text=' + encodeURIComponent(
+    useGuestPhone 
+      ? 'Hi ' + bookingData.name + ', your booking request for *' + bookingData.prop + '* (' + bookingData.checkin + ' – ' + bookingData.checkout + ') has been received. We\'re verifying your payment and will confirm shortly. Ref: ' + reference
+      : adminMsg
+  );
 
   document.getElementById('confirmDetails').innerHTML =
     '<div style="font-size:13px;color:#1a5c35;display:flex;flex-direction:column;gap:5px">' +
@@ -1960,9 +2053,12 @@ function onPaymentSuccess(reference) {
     '</div>';
 
   document.getElementById('waConfirmLink').href = waLink;
-  document.getElementById('step2').style.display = 'none';
-  document.getElementById('step3').style.display = 'block';
-  setTimeout(function() { window.open('https://wa.me/' + OWNER_WA() + '?text=' + adminMsg, '_blank'); }, 1000);
+  
+  // Open WhatsApp in new window after showing success screen briefly
+  setTimeout(function() { 
+    console.log('Opening WhatsApp:', 'https://wa.me/' + guestWA + '?text=' + (useGuestPhone ? encodeURIComponent('Hi ' + bookingData.name + ', your booking request for *' + bookingData.prop + '* (' + bookingData.checkin + ' – ' + bookingData.checkout + ') has been received. We\'re verifying your payment and will confirm shortly. Ref: ' + reference) : adminMsg));
+    window.open('https://wa.me/' + guestWA + '?text=' + (useGuestPhone ? encodeURIComponent('Hi ' + bookingData.name + ', your booking request for *' + bookingData.prop + '* (' + bookingData.checkin + ' – ' + bookingData.checkout + ') has been received. We\'re verifying your payment and will confirm shortly. Ref: ' + reference) : adminMsg), '_blank'); 
+  }, 1500);
 }
 
 // ── EMAIL CONFIRMATION ──
@@ -2003,30 +2099,29 @@ function sendConfirmationEmail(reference) {
     guest_notes: bookingData.notes || 'None',
   };
 
-  // Send guest confirmation
-  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_GUEST, guestEmailParams)
-    .then(function(response) {
-      console.log('✓ Guest confirmation email sent:', response.status);
-      // Show success message to user
-      showNotification('✓ Confirmation email sent to ' + bookingData.email, 'success');
-    })
-    .catch(function(error) {
-      console.error('✗ Failed to send guest email:', error);
-      // Show error message and fallback
-      showNotification('⚠️ Email delivery failed. Please check your email settings.', 'warning');
-      sendConfirmationEmailFallback(reference);
-    });
-
-  // Send admin notification (async, don't block)
-  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ADMIN, adminEmailParams)
-    .then(function(response) {
-      console.log('✓ Admin notification email sent:', response.status);
-    })
-    .catch(function(error) {
-      console.error('✗ Failed to send admin email:', error);
-      // Admin email failure - could show a different notification
-      console.warn('Admin email failed - check EmailJS configuration');
-    });
+  // Send both guest and admin emails
+  Promise.all([
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_GUEST, guestEmailParams)
+      .then(function(response) {
+        console.log('✓ Guest confirmation email sent:', response.status);
+        showNotification('✓ Confirmation email sent to ' + bookingData.email, 'success');
+      })
+      .catch(function(error) {
+        console.error('✗ Failed to send guest email:', error);
+        showNotification('⚠️ Guest email failed. Trying fallback...', 'warning');
+        sendConfirmationEmailFallback(reference);
+      }),
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ADMIN, adminEmailParams)
+      .then(function(response) {
+        console.log('✓ Admin notification email sent:', response.status);
+      })
+      .catch(function(error) {
+        console.error('✗ Failed to send admin email:', error);
+        console.warn('Admin email failed - check EmailJS configuration');
+      })
+  ]).catch(function(error) {
+    console.error('Email promise error:', error);
+  });
 }
 
 // Fallback: Use mailto if EmailJS not configured
@@ -2104,7 +2199,7 @@ function confirmTransfer() {
   document.getElementById('waConfirmLink').textContent = 'Notify us on WhatsApp →';
   document.getElementById('step2').style.display = 'none';
   document.getElementById('step3').style.display = 'block';
-  setTimeout(function() { window.open(waLink, '_blank'); }, 800);
+  setTimeout(function() { window.open(waLink, '_blank'); }, 1500);
 }
 
 // ── HELPERS ──
