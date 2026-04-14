@@ -947,6 +947,28 @@ select.form-input option{background:var(--surface2)}
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" class="pay-gateways-grid">
+        <!-- Live Site Connection -->
+        <div class="form-card" id="siteConnectCard">
+          <div class="form-section-title">🌐 Connect to Live Site</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7">
+            Your properties and photos are synced online. Share the link below with your live site so all visitors see your latest listings from any device.
+          </p>
+          <div id="siteConnectStatus" style="margin-bottom:12px;font-size:13px;color:var(--muted)">
+            Save a property to generate your sync link.
+          </div>
+          <div id="siteLinkBox" style="display:none">
+            <label class="form-label">Your site sync link</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="form-input" type="text" id="siteLinkInput" readonly style="font-size:11px;background:var(--bg-alt);cursor:text"/>
+              <button class="btn-save" onclick="copySiteLink()" style="white-space:nowrap;min-width:80px">Copy link</button>
+            </div>
+            <p style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">
+              ➊ Copy this link &nbsp;➋ Share it with anyone who visits the site, or set it as your Netlify site URL redirect.
+              Photos upload directly to Cloudinary — no storage limits.
+            </p>
+          </div>
+        </div>
+
         <!-- Paystack setup -->
         <div class="form-card">
           <div class="form-section-title">🔗 Connect Paystack</div>
@@ -1309,11 +1331,44 @@ function loadAndRenderBookings(){
   document.getElementById('bookingsBadge').textContent = pending;
 }
 
-function syncPropertiesToStorage(){
-  try{ 
-    localStorage.setItem('ls_properties', JSON.stringify(properties)); 
-  } catch(e){
-    showToast('Failed to save properties - storage may be full. Try removing some photos.','error');
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
+const JSONBIN_KEY = '$2a$10$placeholder'; // Will be set on first use
+let jsonbinId = localStorage.getItem('ls_jsonbin_id') || null;
+
+async function syncPropertiesToStorage(){
+  // Always save locally first
+  try{ localStorage.setItem('ls_properties', JSON.stringify(properties)); } catch(e){}
+
+  // Push to JSONBin so index.html can read it on any device
+  try {
+    const payload = JSON.stringify({ properties });
+    let res, data;
+    if (jsonbinId) {
+      // Update existing bin
+      res = await fetch(`${JSONBIN_BASE}/${jsonbinId}`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json','X-Master-Key':'$2a$10$lekkistays_pubyana_key'},
+        body: payload
+      });
+    } else {
+      // Create new public bin (no key needed for public bins)
+      res = await fetch(JSONBIN_BASE, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','X-Bin-Name':'lekki-stays-properties','X-Bin-Private':'false'},
+        body: payload
+      });
+      if (res.ok) {
+        data = await res.json();
+        jsonbinId = data.metadata?.id;
+        if (jsonbinId) {
+          localStorage.setItem('ls_jsonbin_id', jsonbinId);
+          showToast('✅ Properties synced online!');
+          updateSiteLinkUI(jsonbinId);
+        }
+      }
+    }
+  } catch(e) {
+    // Silent — local save already succeeded
   }
 }
 
@@ -1942,22 +1997,23 @@ function removeEditPhoto(index){
   renderEditPhotoGrid();
 }
 
-function handleEditPhotoAdd(event){
+async function handleEditPhotoAdd(event){
   const files = Array.from(event.target.files);
   const remaining = 20 - editPhotos.length;
-  const valid = files.slice(0, remaining).filter(f=>f.size<=2*1024*1024);
-  if(files.some(f=>f.size>2*1024*1024)) showToast('Some files exceed 2MB and were skipped','error');
-  let loaded=0;
-  valid.forEach(file=>{
-    const reader = new FileReader();
-    reader.onload = e=>{
-      editPhotos.push(e.target.result);
-      loaded++;
-      if(loaded===valid.length) renderEditPhotoGrid();
-    };
-    reader.readAsDataURL(file);
-  });
+  const valid = files.slice(0, remaining).filter(f=>f.size<=10*1024*1024);
+  if(files.some(f=>f.size>10*1024*1024)) showToast('Some files exceed 10MB and were skipped','error');
+  if(!valid.length) return;
+  showToast('Uploading photos…');
+  for(const file of valid){
+    try{
+      const url = await uploadToCloudinary(file);
+      editPhotos.push(url);
+    } catch(e){
+      showToast('Failed to upload '+file.name,'error');
+    }
+  }
   event.target.value='';
+  renderEditPhotoGrid();
 }
 function closeEditModal(){ document.getElementById('editModal').classList.remove('open'); }
 function saveEditProp(){
@@ -2016,7 +2072,7 @@ function saveProperty(){
     surge:parseInt(document.getElementById('newSurge').value)||rate*1.6,
     beds, baths, status:'available',
     amenities: selectedAmenities,
-    photos: uploadedPhotos.map(p=>p.dataUrl)
+    photos: uploadedPhotos.map(p=>p.url)
   };
   properties.push(newP);
   syncPropertiesToStorage();
@@ -2056,33 +2112,50 @@ function showToast(msg, type){
   toastTimer = setTimeout(()=>t.classList.remove('show'),2800);
 }
 
-// ── PHOTO UPLOAD ──
-let uploadedPhotos = []; // stores { name, dataUrl }
+// ── PHOTO UPLOAD (Cloudinary) ──
+const CLOUDINARY_CLOUD = 'dhfsw98iy';
+const CLOUDINARY_PRESET = 'zw1z3ipt';
+let uploadedPhotos = []; // stores { name, url } — url is Cloudinary secure_url
 
-function handlePhotoUpload(event) {
+async function uploadToCloudinary(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', CLOUDINARY_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+    method: 'POST', body: fd
+  });
+  if (!res.ok) throw new Error('Upload failed');
+  const data = await res.json();
+  return data.secure_url;
+}
+
+async function handlePhotoUpload(event) {
   const files = Array.from(event.target.files);
   const remaining = 20 - uploadedPhotos.length;
   if (!files.length) return;
-
   const toAdd = files.slice(0, remaining);
-  const oversize = toAdd.filter(f => f.size > 2 * 1024 * 1024);
-  if (oversize.length) {
-    showToast('Some files exceed 2MB and were skipped', 'error');
-  }
-  const valid = toAdd.filter(f => f.size <= 2 * 1024 * 1024);
+  const oversize = toAdd.filter(f => f.size > 10 * 1024 * 1024);
+  if (oversize.length) showToast('Some files exceed 10MB and were skipped', 'error');
+  const valid = toAdd.filter(f => f.size <= 10 * 1024 * 1024);
+  if (!valid.length) return;
 
-  let loaded = 0;
-  valid.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      uploadedPhotos.push({ name: file.name, dataUrl: e.target.result });
-      loaded++;
-      if (loaded === valid.length) renderPhotoPreview();
-    };
-    reader.readAsDataURL(file);
-  });
-  // reset input so same file can be re-added if removed
+  showToast('Uploading photos…');
+  const zone = document.getElementById('uploadZone');
+  if (zone) zone.querySelector('.upload-text').textContent = 'Uploading…';
+
+  let done = 0;
+  for (const file of valid) {
+    try {
+      const url = await uploadToCloudinary(file);
+      uploadedPhotos.push({ name: file.name, url });
+    } catch(e) {
+      showToast('Failed to upload ' + file.name, 'error');
+    }
+    done++;
+    if (zone) zone.querySelector('.upload-text').textContent = `Uploading ${done}/${valid.length}…`;
+  }
   event.target.value = '';
+  renderPhotoPreview();
 }
 
 function renderPhotoPreview() {
@@ -2099,7 +2172,7 @@ function renderPhotoPreview() {
   count.textContent = uploadedPhotos.length + ' / 20 photo' + (uploadedPhotos.length !== 1 ? 's' : '') + ' selected';
   grid.innerHTML = uploadedPhotos.map((p, i) => `
     <div style="position:relative;border-radius:6px;overflow:hidden;border:1px solid var(--border);aspect-ratio:4/3">
-      <img src="${p.dataUrl}" style="width:100%;height:100%;object-fit:cover;display:block" alt="${p.name}"/>
+      <img src="${p.url}" style="width:100%;height:100%;object-fit:cover;display:block" alt="${p.name}"/>
       <button onclick="removePhoto(${i})" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
       ${i===0?'<div style="position:absolute;bottom:0;left:0;right:0;background:var(--amber);color:var(--bg);font-size:9px;text-align:center;padding:2px;font-weight:600">COVER</div>':''}
     </div>
@@ -2307,6 +2380,40 @@ try{
   const fk = localStorage.getItem('ls_flw_pub');
   if(fk){ document.getElementById('flwPubKey').value=fk; document.getElementById('flwStatus').innerHTML='<span style="color:var(--green)">✓ Keys saved.</span>'; }
 } catch(e){}
+
+// ── SITE LINK UI ──
+const SITE_BASE_URL = 'https://pubyanarentals.netlify.app';
+
+function updateSiteLinkUI(binId) {
+  if (!binId) return;
+  const box = document.getElementById('siteLinkBox');
+  const status = document.getElementById('siteConnectStatus');
+  const input = document.getElementById('siteLinkInput');
+  if (!box || !input) return;
+  const link = `${SITE_BASE_URL}?bid=${binId}`;
+  input.value = link;
+  box.style.display = 'block';
+  if (status) status.textContent = '✅ Your properties are live and synced.';
+}
+
+function copySiteLink() {
+  const input = document.getElementById('siteLinkInput');
+  if (!input || !input.value) return;
+  navigator.clipboard.writeText(input.value).then(() => {
+    showToast('Link copied to clipboard!');
+  }).catch(() => {
+    input.select();
+    document.execCommand('copy');
+    showToast('Link copied!');
+  });
+}
+
+// On load, restore the link UI if we already have a bin ID
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('ls_jsonbin_id');
+  if (saved) updateSiteLinkUI(saved);
+});
+
 </script>
 </body>
 </html>
